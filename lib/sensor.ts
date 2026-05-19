@@ -7,6 +7,74 @@ export type SensorReading = {
 
 export type MetricKey = "temperature" | "humidity";
 
+export type PeriodStats = {
+  min: number;
+  max: number;
+  avg: number;
+};
+
+export type DashboardStats = Record<MetricKey, PeriodStats>;
+
+export type ThresholdLevel = "normal" | "warning" | "danger";
+
+export type ThresholdConfig = {
+  warningMin: number;
+  warningMax: number;
+  dangerMin: number;
+  dangerMax: number;
+};
+
+export const THRESHOLDS: Record<MetricKey, ThresholdConfig> = {
+  temperature: {
+    warningMin: 10,
+    warningMax: 35,
+    dangerMin: 5,
+    dangerMax: 40,
+  },
+  humidity: {
+    warningMin: 20,
+    warningMax: 80,
+    dangerMin: 10,
+    dangerMax: 90,
+  },
+};
+
+export function getThresholdLevel(
+  value: number | null | undefined,
+  metric: MetricKey
+): ThresholdLevel {
+  if (value == null) return "normal";
+
+  const t = THRESHOLDS[metric];
+
+  if (value <= t.dangerMin || value >= t.dangerMax) return "danger";
+  if (value <= t.warningMin || value >= t.warningMax) return "warning";
+
+  return "normal";
+}
+
+export function computeStats(data: SensorReading[]): DashboardStats {
+  const temps = data
+    .filter((r) => r.temperature != null)
+    .map((r) => r.temperature!);
+  const hums = data
+    .filter((r) => r.humidity != null)
+    .map((r) => r.humidity!);
+
+  return {
+    temperature: {
+      min: temps.length > 0 ? Math.min(...temps) : 0,
+      max: temps.length > 0 ? Math.max(...temps) : 0,
+      avg: temps.length > 0 ? avg(temps) : 0,
+    },
+    humidity: {
+      min: hums.length > 0 ? Math.min(...hums) : 0,
+      max: hums.length > 0 ? Math.max(...hums) : 0,
+      avg: hums.length > 0 ? avg(hums) : 0,
+    },
+  };
+}
+
 export type TimeRange = "1h" | "3h" | "6h" | "24h";
 
 export const TIME_RANGES: { value: TimeRange; label: string }[] = [
