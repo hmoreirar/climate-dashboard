@@ -1,22 +1,33 @@
 import { supabase } from "@/lib/supabase";
 import MetricChart from "@/components/MetricChart";
+import TimeRangeSelector from "@/components/TimeRangeSelector";
 import {
   buildChartSeries,
   formatLastUpdated,
   getDashboardTimeZone,
+  getSinceMs,
   isDeviceOnline,
   type SensorReading,
+  type TimeRange,
 } from "@/lib/sensor";
 
-export const revalidate = 5;
+export const revalidate = 0;
 const ONLINE_WINDOW_MINUTES = 10;
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ range?: TimeRange }>;
+}) {
+  const { range = "24h" } = await searchParams;
+  const since = new Date(Date.now() - getSinceMs(range)).toISOString(); // eslint-disable-line react-hooks/purity
+
   const { data, error } = await supabase
     .from("sensor_data")
     .select("created_at,device_id,humidity,temperature")
+    .gte("created_at", since)
     .order("created_at", { ascending: false })
-    .limit(300)
+    .limit(15000)
     .returns<SensorReading[]>();
 
   if (error) {
@@ -72,6 +83,7 @@ export default async function Home() {
   const latest = data?.[0];
   const chartData = buildChartSeries(data ?? []);
   const isOnline = isDeviceOnline(latest, ONLINE_WINDOW_MINUTES);
+  const dataCount = data.length;
   const latestTemperature = latest?.temperature ?? "No data";
   const latestHumidity = latest?.humidity ?? "No data";
   const latestDevice = latest?.device_id ?? "Unknown device";
@@ -87,7 +99,12 @@ export default async function Home() {
           Reliable temperature and humidity telemetry for your IoT device
         </p>
 
-        <div className="flex items-center gap-2 mb-10 mt-3">
+        <div className="flex items-center justify-between mt-6 mb-6">
+          <TimeRangeSelector selected={range} />
+          <p className="text-xs text-zinc-600">{dataCount} lecturas</p>
+        </div>
+
+        <div className="flex items-center gap-2 mb-10">
           <div
             className={`h-3 w-3 rounded-full ${
               isOnline ? "bg-emerald-500" : "bg-amber-500"

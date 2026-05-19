@@ -9,7 +9,12 @@ import {
   YAxis,
 } from "recharts";
 
-import type { ChartPoint, MetricKey } from "@/lib/sensor";
+import {
+  formatChartTick,
+  formatChartTooltipLabel,
+  type ChartPoint,
+  type MetricKey,
+} from "@/lib/sensor";
 
 type Props = {
   color: string;
@@ -49,11 +54,16 @@ export default function MetricChart({
       <div
         className="h-[320px] w-full"
         role="img"
-        aria-label={`Gráfico de ${title}. ${data.length} puntos de datos mostrados.`}
+        aria-label={`Gráfico de ${title}. ${data.length} puntos de datos.`}
       >
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={data}>
-            <XAxis dataKey="timeLabel" minTickGap={32} stroke="#a1a1aa" />
+            <XAxis
+              dataKey="timestamp"
+              tickFormatter={formatChartTick}
+              minTickGap={48}
+              stroke="#a1a1aa"
+            />
             <YAxis
               stroke="#a1a1aa"
               tickFormatter={(value: number) => `${value}${unit}`}
@@ -73,6 +83,7 @@ export default function MetricChart({
 
                 return value == null ? "No data" : String(value);
               }}
+              labelFormatter={(value) => formatChartTooltipLabel(value as string)}
               labelStyle={{ color: "#d4d4d8" }}
             />
             <Line
