@@ -1,10 +1,43 @@
 @import "tailwindcss";
 
+:root {
+  --canvas: #fafafa;
+  --card: #ffffff;
+  --content: #18181b;
+  --muted: #71717a;
+  --line: #e4e4e7;
+  --line-hover: #d4d4d8;
+}
+
+.dark {
+  --canvas: #09090b;
+  --card: #18181b;
+  --content: #fafafa;
+  --muted: #a1a1aa;
+  --line: #27272a;
+  --line-hover: #3f3f46;
+}
+
 @theme inline {
+  --color-canvas: var(--canvas);
+  --color-card: var(--card);
+  --color-content: var(--content);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-hover: var(--line-hover);
   --font-sans: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
 }
 
 body {
   font-family: var(--font-sans);
+}
+
+.recharts-text {
+  fill: var(--muted);
+}
+
+.recharts-cartesian-axis-line,
+.recharts-cartesian-axis-tick-line {
+  stroke: var(--line);
 }

@@ -29,7 +29,7 @@ export default async function Home({
     console.error("Failed to load sensor_data", error);
 
     return (
-      <main className="min-h-screen bg-zinc-950 p-4 sm:p-6 md:p-8 text-white">
+      <main className="min-h-screen bg-canvas p-4 sm:p-6 md:p-8 text-content">
         <div className="mx-auto max-w-4xl">
           <div className="rounded-2xl border border-red-950 bg-red-950/40 p-8">
             <h1 className="text-3xl font-bold">Climate Monitor Dashboard</h1>
@@ -45,11 +45,11 @@ export default async function Home({
 
   if (!data || data.length === 0) {
     return (
-      <main className="min-h-screen bg-zinc-950 p-4 sm:p-6 md:p-8 text-white">
+      <main className="min-h-screen bg-canvas p-4 sm:p-6 md:p-8 text-content">
         <div className="mx-auto max-w-4xl">
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-center">
+          <div className="rounded-2xl border border-line bg-card p-8 text-center">
             <svg
-              className="mx-auto mb-4 h-12 w-12 text-zinc-600"
+              className="mx-auto mb-4 h-12 w-12 text-muted"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -62,10 +62,10 @@ export default async function Home({
               />
             </svg>
             <h1 className="text-3xl font-bold">Climate Monitor Dashboard</h1>
-            <p className="mt-3 text-zinc-400">
+            <p className="mt-3 text-muted">
               Esperando datos del sensor...
             </p>
-            <p className="mt-2 text-sm text-zinc-600">
+            <p className="mt-2 text-sm text-muted">
               Los primeros datos aparecerán automáticamente cuando el
               dispositivo envíe lecturas a Supabase.
             </p>
@@ -76,13 +76,13 @@ export default async function Home({
   }
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white p-4 sm:p-6 md:p-8">
+    <main className="min-h-screen bg-canvas text-content p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
           Climate Monitor Dashboard
         </h1>
 
-        <p className="text-zinc-400">
+        <p className="text-muted">
           Reliable temperature and humidity telemetry for your IoT device
         </p>
 

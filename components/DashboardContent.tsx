@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import MetricChart from "@/components/MetricChart";
 import TimeRangeSelector from "@/components/TimeRangeSelector";
+import ThemeToggle from "@/components/ThemeToggle";
 import {
   buildChartSeries,
   computeStats,
@@ -37,13 +38,11 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
     }
   }, []);
 
-  // Poll every 10s (background, no loading indicator)
   useEffect(() => {
     const interval = setInterval(() => fetchData(range), 10000);
     return () => clearInterval(interval);
   }, [range, fetchData]);
 
-  // Fetch immediately when range changes (with loading indicator)
   const handleRangeChange = useCallback(
     (newRange: TimeRange) => {
       setRange(newRange);
@@ -69,20 +68,23 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
   const levelBorder = (level: "normal" | "warning" | "danger") => {
     if (level === "danger") return "border-red-800 bg-red-950/20";
     if (level === "warning") return "border-amber-700 bg-amber-950/20";
-    return "border-zinc-800 bg-zinc-900";
+    return "border-line bg-card";
   };
 
   const levelText = (level: "normal" | "warning" | "danger") => {
     if (level === "danger") return "text-red-400";
     if (level === "warning") return "text-amber-400";
-    return "text-zinc-400";
+    return "text-muted";
   };
 
   return (
     <>
       <div className="flex items-center justify-between mt-6 mb-6">
-        <TimeRangeSelector selected={range} onRangeChange={handleRangeChange} />
-        <p className="text-xs text-zinc-600">{dataCount} lecturas</p>
+        <div className="flex items-center gap-3">
+          <TimeRangeSelector selected={range} onRangeChange={handleRangeChange} />
+          <p className="text-xs text-muted">{dataCount} lecturas</p>
+        </div>
+        <ThemeToggle />
       </div>
 
       <div className="flex items-center gap-2 mb-10">
@@ -105,14 +107,14 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
 
       <div className={`grid md:grid-cols-2 gap-6 transition-opacity duration-300 ${loading ? "opacity-50" : "opacity-100"}`}>
         <div
-          className={`rounded-2xl p-4 sm:p-5 md:p-8 border transition-colors duration-300 hover:border-zinc-700 ${levelBorder(tempLevel)}`}
+          className={`rounded-2xl p-4 sm:p-5 md:p-8 border transition-colors duration-300 hover:border-line-hover ${levelBorder(tempLevel)}`}
         >
           <div className="flex items-center justify-between">
             <p className={`mb-2 ${levelText(tempLevel)}`}>Temperature</p>
             {tempLevel === "danger" && <span className="text-red-400 text-xl">⚠</span>}
             {tempLevel === "warning" && <span className="text-amber-400 text-xl">⚠</span>}
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-content">
             {latestTemperature != null ? `${latestTemperature}°C` : "No data"}
           </h2>
           <div className={`mt-3 flex gap-4 text-sm ${levelText(tempLevel)}`}>
@@ -123,14 +125,14 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         </div>
 
         <div
-          className={`rounded-2xl p-4 sm:p-5 md:p-8 border transition-colors duration-300 hover:border-zinc-700 ${levelBorder(humLevel)}`}
+          className={`rounded-2xl p-4 sm:p-5 md:p-8 border transition-colors duration-300 hover:border-line-hover ${levelBorder(humLevel)}`}
         >
           <div className="flex items-center justify-between">
             <p className={`mb-2 ${levelText(humLevel)}`}>Humidity</p>
             {humLevel === "danger" && <span className="text-red-400 text-xl">⚠</span>}
             {humLevel === "warning" && <span className="text-amber-400 text-xl">⚠</span>}
           </div>
-          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold">
+          <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-content">
             {latestHumidity != null ? `${latestHumidity}%` : "No data"}
           </h2>
           <div className={`mt-3 flex gap-4 text-sm ${levelText(humLevel)}`}>
@@ -141,13 +143,13 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         </div>
       </div>
 
-      <div className="mt-6 bg-zinc-900 rounded-2xl p-4 sm:p-5 md:p-6 border border-zinc-800 transition-colors duration-300 hover:border-zinc-700">
-        <p className="text-zinc-400 mb-2">Device</p>
-        <p className="text-2xl font-semibold">{latestDevice}</p>
-        <p className="text-zinc-500 mt-4">
+      <div className="mt-6 bg-card rounded-2xl p-4 sm:p-5 md:p-6 border border-line transition-colors duration-300 hover:border-line-hover">
+        <p className="text-muted mb-2">Device</p>
+        <p className="text-2xl font-semibold text-content">{latestDevice}</p>
+        <p className="text-muted mt-4">
           Last update: {formatLastUpdated(latest?.created_at)}
         </p>
-        <p className="text-zinc-500 mt-1">
+        <p className="text-muted mt-1">
           Dashboard time zone: {getDashboardTimeZone()}
         </p>
       </div>
