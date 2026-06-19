@@ -1,22 +1,24 @@
-import { supabase } from "@/lib/supabase";
-import { getSinceMs, type SensorReading, type TimeRange } from "@/lib/sensor";
+import { sql } from "@/lib/neon";
+import { getDateRange, type SensorReading, type TimeRange } from "@/lib/sensor";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const range = (searchParams.get("range") ?? "24h") as TimeRange;
-  const since = new Date(Date.now() - getSinceMs(range)).toISOString()
+  const customStart = searchParams.get("start");
+  const customEnd = searchParams.get("end");
 
-  const { data, error } = await supabase
-    .from("sensor_data")
-    .select("created_at,device_id,humidity,temperature")
-    .gte("created_at", since)
-    .order("created_at", { ascending: false })
-    .limit(15000)
-    .returns<SensorReading[]>();
+  const { start, end } = getDateRange(range, customStart, customEnd);
 
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+  try {
+    const data = await sql<SensorReading[]>`
+      SELECT created_at, device_id, humidity, temperature
+      FROM sensor_data
+      WHERE created_at >= ${start} AND created_at <= ${end}
+      ORDER BY created_at DESC
+      LIMIT 15000
+    `;
+    return Response.json({ data });
+  } catch (error) {
+    return Response.json({ error: (error as Error).message }, { status: 500 });
   }
-
-  return Response.json({ data });
 }

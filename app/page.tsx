@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { sql } from "@/lib/neon";
 import DashboardContent from "@/components/DashboardContent";
 import {
   getSinceMs,
@@ -17,15 +17,16 @@ export default async function Home({
 
   const since = new Date(Date.now() - getSinceMs(range)).toISOString(); // eslint-disable-line react-hooks/purity
 
-  const { data, error } = await supabase
-    .from("sensor_data")
-    .select("created_at,device_id,humidity,temperature")
-    .gte("created_at", since)
-    .order("created_at", { ascending: false })
-    .limit(15000)
-    .returns<SensorReading[]>();
-
-  if (error) {
+  let data: SensorReading[];
+  try {
+    data = await sql<SensorReading[]>`
+      SELECT created_at, device_id, humidity, temperature
+      FROM sensor_data
+      WHERE created_at >= ${since}
+      ORDER BY created_at DESC
+      LIMIT 15000
+    `;
+  } catch (error) {
     console.error("Failed to load sensor_data", error);
 
     return (
@@ -34,7 +35,7 @@ export default async function Home({
           <div className="rounded-2xl border border-red-950 bg-red-950/40 p-8">
             <h1 className="text-3xl font-bold">Climate Monitor Dashboard</h1>
             <p className="mt-3 text-red-100">
-              Sensor data is temporarily unavailable. Check Supabase
+              Sensor data is temporarily unavailable. Check database
               connectivity and try again.
             </p>
           </div>
@@ -67,7 +68,7 @@ export default async function Home({
             </p>
             <p className="mt-2 text-sm text-muted">
               Los primeros datos aparecerán automáticamente cuando el
-              dispositivo envíe lecturas a Supabase.
+              dispositivo envíe lecturas.
             </p>
           </div>
         </div>
