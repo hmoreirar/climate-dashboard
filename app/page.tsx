@@ -1,5 +1,6 @@
 import { sql } from "@/lib/neon";
 import DashboardContent from "@/components/DashboardContent";
+
 import {
   getSinceMs,
   type SensorReading,
@@ -77,18 +78,8 @@ export default async function Home({
   }
 
   return (
-    <main className="min-h-screen bg-canvas text-content p-4 sm:p-6 md:p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-2">
-          Climate Monitor Dashboard
-        </h1>
-
-        <p className="text-muted">
-          Reliable temperature and humidity telemetry for your IoT device
-        </p>
-
+    <main className="min-h-screen bg-canvas text-content">
         <DashboardContent initialData={data} initialRange={range} />
-      </div>
     </main>
   );
 }

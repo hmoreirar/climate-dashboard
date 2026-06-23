@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import MetricChart from "@/components/MetricChart";
+import WeatherWidget from "@/components/WeatherWidget";
+import AirQualityWidget from "@/components/AirQualityWidget";
 import TimeRangeSelector from "@/components/TimeRangeSelector";
 import ThemeToggle from "@/components/ThemeToggle";
 import AnimatedCounter from "@/components/AnimatedCounter";
@@ -39,8 +41,11 @@ const stagger = {
 export default function DashboardContent({ initialData, initialRange }: Props) {
   const [range, setRange] = useState(initialRange);
   const [data, setData] = useState(initialData);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refError, setRefError] = useState(false);
 
   const fetchData = useCallback(async (r: TimeRange, start?: string, end?: string) => {
+    setRefreshing(true);
     const params = new URLSearchParams({ range: r });
     if (start) params.set("start", start);
     if (end) params.set("end", end);
@@ -48,8 +53,11 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
       const res = await fetch(`/api/sensor-data?${params}`);
       const json = await res.json();
       if (json.data) setData(json.data);
+      setRefError(false);
     } catch {
-      // silently fail, next poll will retry
+      setRefError(true);
+    } finally {
+      setRefreshing(false);
     }
   }, []);
 
@@ -102,11 +110,11 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
       initial="initial"
       animate="animate"
       variants={stagger}
-      className="max-w-7xl mx-auto p-4 sm:p-6 md:p-8"
+      className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 sm:p-6 md:p-8 max-w-7xl mx-auto"
     >
       <motion.header
         variants={fadeUp}
-        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8"
+        className="col-span-1 md:col-span-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
       >
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-content">
@@ -118,14 +126,26 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         </div>
         <div className="flex items-center gap-3">
           <TimeRangeSelector selected={range} onRangeChange={handleRangeChange} />
-          <p className="text-xs text-muted whitespace-nowrap">{dataCount} lecturas</p>
+          <div className="flex items-center gap-1.5">
+            <span
+              className={`h-1.5 w-1.5 rounded-full transition-colors duration-300 ${
+                refreshing
+                  ? "bg-blue-400 animate-pulse"
+                  : refError
+                    ? "bg-amber-500"
+                    : "bg-emerald-500"
+              }`}
+              title={refreshing ? "Refreshing..." : refError ? "Refresh failed" : "Live"}
+            />
+            <p className="text-xs text-muted whitespace-nowrap">{dataCount} lecturas</p>
+          </div>
           <ThemeToggle />
         </div>
       </motion.header>
 
       <motion.div
         variants={fadeUp}
-        className="flex items-center gap-3 mb-8"
+        className="col-span-1 md:col-span-2 flex items-center gap-3"
       >
         <div className="relative flex items-center justify-center">
           <div className={`h-3 w-3 rounded-full ${statusColor}`} role="status" aria-hidden="true" />
@@ -150,44 +170,44 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         </div>
       </motion.div>
 
-      <motion.div
-        variants={fadeUp}
-        className="grid md:grid-cols-2 gap-6 mb-6"
-      >
-        <MetricCard
-          title="Temperature"
-          value={latestTemperature}
-          unit="°C"
-          level={tempLevel}
-          levelText={levelText}
-          levelBorder={levelBorder}
-          stats={stats.temperature}
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25a.75.75 0 01.75.75v11.25a3 3 0 11-1.5 0V3a.75.75 0 01.75-.75z" />
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 17.25a3 3 0 013 3 3 3 0 01-6 0 3 3 0 013-3z" />
-            </svg>
-          }
-        />
-        <MetricCard
-          title="Humidity"
-          value={latestHumidity}
-          unit="%"
-          level={humLevel}
-          levelText={levelText}
-          levelBorder={levelBorder}
-          stats={stats.humidity}
-          icon={
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a7.5 7.5 0 007.5-7.5c0-4.243-7.5-11.25-7.5-11.25S4.5 9.257 4.5 13.5A7.5 7.5 0 0012 21z" />
-            </svg>
-          }
-        />
+      <MetricCard
+        title="Temperature"
+        value={latestTemperature}
+        unit="°C"
+        level={tempLevel}
+        levelText={levelText}
+        levelBorder={levelBorder}
+        stats={stats.temperature}
+        icon={
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2.25a.75.75 0 01.75.75v11.25a3 3 0 11-1.5 0V3a.75.75 0 01.75-.75z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 17.25a3 3 0 013 3 3 3 0 01-6 0 3 3 0 013-3z" />
+          </svg>
+        }
+      />
+      <MetricCard
+        title="Humidity"
+        value={latestHumidity}
+        unit="%"
+        level={humLevel}
+        levelText={levelText}
+        levelBorder={levelBorder}
+        stats={stats.humidity}
+        icon={
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21a7.5 7.5 0 007.5-7.5c0-4.243-7.5-11.25-7.5-11.25S4.5 9.257 4.5 13.5A7.5 7.5 0 0012 21z" />
+          </svg>
+        }
+      />
+
+      <motion.div variants={fadeUp} className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <WeatherWidget indoorTemp={latestTemperature} indoorHumidity={latestHumidity} />
+        <AirQualityWidget />
       </motion.div>
 
       <motion.div
         variants={fadeUp}
-        className="mb-6 rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 md:p-6 transition-colors duration-300 hover:border-line-hover"
+        className="col-span-1 md:col-span-2 rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 md:p-6 transition-colors duration-300 hover:border-line-hover"
       >
         <div className="flex items-center justify-between">
           <div>
@@ -200,7 +220,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         </div>
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="col-span-1 md:col-span-2">
         <MetricChart
           color="#f97316"
           data={chartData}
@@ -210,7 +230,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         />
       </motion.div>
 
-      <motion.div variants={fadeUp} className="mt-6">
+      <motion.div variants={fadeUp} className="col-span-1 md:col-span-2">
         <MetricChart
           color="#38bdf8"
           data={chartData}
@@ -220,7 +240,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         />
       </motion.div>
 
-      <motion.div variants={fadeUp}>
+      <motion.div variants={fadeUp} className="col-span-1 md:col-span-2">
         <HistoricalAnalytics data={data} />
       </motion.div>
     </motion.div>
