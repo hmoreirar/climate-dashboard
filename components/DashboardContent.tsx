@@ -12,7 +12,7 @@ import HistoricalAnalytics from "@/components/HistoricalAnalytics";
 import {
   buildChartSeries,
   computeStats,
-  formatLastUpdated,
+  formatRelativeTime,
   getDashboardTimeZone,
   getThresholdLevel,
   isDeviceOnline,
@@ -20,7 +20,8 @@ import {
   type TimeRange,
 } from "@/lib/sensor";
 
-const ONLINE_WINDOW_MINUTES = 10;
+const ONLINE_WINDOW_MINUTES = 5;
+const REFRESH_INTERVAL_MS = 30_000;
 
 type Props = {
   initialData: SensorReading[];
@@ -62,7 +63,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => fetchData(range), 10000);
+    const interval = setInterval(() => fetchData(range), REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [range, fetchData]);
 
@@ -164,7 +165,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
           </p>
           <span className="text-muted text-xs">
             &mdash; {isOnline
-              ? `Actualizado ${formatLastUpdated(latest?.created_at)}`
+              ? `Actualizado ${formatRelativeTime(latest?.created_at)}`
               : `Sin datos en los últimos ${ONLINE_WINDOW_MINUTES} minutos`}
           </span>
         </div>

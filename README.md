@@ -76,7 +76,13 @@ Requiere el header `x-api-key` con el valor de `INGEST_API_KEY`.
 
 Devuelve las lecturas de sensor en un rango de tiempo.
 
-Query params: `range` (`1h` | `3h` | `6h` | `24h` | `custom`), `start`, `end`.
+Query params: `range` (`1h` | `3h` | `6h` | `24h` | `7d` | `custom`), `start`, `end`.
+
+---
+
+## Cadencia de medición
+
+El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 30 segundos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
 
 ---
 
@@ -93,6 +99,17 @@ NEXT_PUBLIC_DASHBOARD_TIME_ZONE=America/Santiago
 - `DATABASE_URL`: cadena de conexión de Neon (https://console.neon.tech)
 - `INGEST_API_KEY`: clave de API para la ingesta del dispositivo (puede generarla con `openssl rand -hex 32`)
 - `NEXT_PUBLIC_DASHBOARD_TIME_ZONE`: zona horaria del dashboard (opcional, por defecto `America/Santiago`)
+
+---
+
+## Próximas mejoras (pendientes)
+
+- Actualización OTA del firmware del ESP32 (over-the-air). Plan:
+  - El dispositivo envía su versión de firmware en el `POST /api/ingest`.
+  - Agregar un endpoint `/api/firmware/latest` que sirva el binario `.bin`.
+  - El ESP32 consulta si hay versión nueva, descarga el firmware por HTTP y hace reboot.
+  - Requiere tabla de particiones OTA (`ota_0`/`ota_1`) en el firmware.
+- Configurar el firmware del ESP32 para la cadencia de medición de 1 minuto (pendiente, requiere la placa a mano).
 
 ---
 

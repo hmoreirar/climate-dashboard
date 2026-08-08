@@ -88,13 +88,14 @@ export function computeStats(data: SensorReading[]): DashboardStats {
   };
 }
 
-export type TimeRange = "1h" | "3h" | "6h" | "24h" | "custom";
+export type TimeRange = "1h" | "3h" | "6h" | "24h" | "7d" | "custom";
 
 export const TIME_RANGES: { value: TimeRange; label: string }[] = [
   { value: "1h", label: "1h" },
   { value: "3h", label: "3h" },
   { value: "6h", label: "6h" },
   { value: "24h", label: "24h" },
+  { value: "7d", label: "7d" },
   { value: "custom", label: "Personalizado" },
 ];
 
@@ -104,6 +105,7 @@ export function getSinceMs(range: TimeRange): number {
     "3h": 10_800_000,
     "6h": 21_600_000,
     "24h": 86_400_000,
+    "7d": 604_800_000,
   };
   return map[range] ?? 86_400_000;
 }
@@ -147,15 +149,26 @@ const chartTimeFormatter = new Intl.DateTimeFormat(DASHBOARD_LOCALE, {
   timeZone: DASHBOARD_TIME_ZONE,
 });
 
-const lastUpdatedFormatter = new Intl.DateTimeFormat(DASHBOARD_LOCALE, {
-  day: "2-digit",
-  hour: "2-digit",
-  minute: "2-digit",
-  month: "long",
-  second: "2-digit",
-  timeZone: DASHBOARD_TIME_ZONE,
-  year: "numeric",
-});
+export function formatRelativeTime(createdAt: string | null | undefined) {
+  if (!createdAt) {
+    return "sin datos";
+  }
+
+  const date = parseSensorTimestamp(createdAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return "timestamp inválido";
+  }
+
+  const diffMs = Date.now() - date.getTime();
+
+  if (diffMs < 5_000) return "ahora";
+  if (diffMs < 60_000) return `hace ${Math.floor(diffMs / 1000)} s`;
+  if (diffMs < 3_600_000) return `hace ${Math.floor(diffMs / 60_000)} min`;
+  if (diffMs < 86_400_000) return `hace ${Math.floor(diffMs / 3_600_000)} h`;
+
+  return `hace ${Math.floor(diffMs / 86_400_000)} d`;
+}
 
 const tableTimeFormatter = new Intl.DateTimeFormat(DASHBOARD_LOCALE, {
   day: "2-digit",
@@ -214,20 +227,6 @@ export function isDeviceOnline(
   }
 
   return Date.now() - lastReadingAt <= staleAfterMinutes * 60_000;
-}
-
-export function formatLastUpdated(createdAt: string | null | undefined) {
-  if (!createdAt) {
-    return "No data";
-  }
-
-  const date = parseSensorTimestamp(createdAt);
-
-  if (Number.isNaN(date.getTime())) {
-    return "Invalid timestamp";
-  }
-
-  return lastUpdatedFormatter.format(date);
 }
 
 export function buildChartSeries(data: SensorReading[], maxPoints = 500) {
