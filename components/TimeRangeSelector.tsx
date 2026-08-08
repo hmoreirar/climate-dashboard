@@ -61,7 +61,7 @@ export default function TimeRangeSelector({ selected, onRangeChange }: Props) {
               : "text-muted hover:text-content"
           }`}
         >
-          Custom
+          Personalizado
         </button>
       </div>
 
@@ -98,7 +98,7 @@ export default function TimeRangeSelector({ selected, onRangeChange }: Props) {
             disabled={!customStart || !customEnd}
             className="px-3 py-1.5 text-sm rounded-md bg-zinc-700 dark:bg-zinc-600 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Apply
+            Aplicar
           </button>
         </motion.div>
       )}

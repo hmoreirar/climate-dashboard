@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Climate Monitor Dashboard",
-  description: "Live temperature and humidity telemetry from your climate monitor.",
+  description: "Telemetría en vivo de temperatura y humedad de su monitor de clima.",
 };
 
 const themeScript = `

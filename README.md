@@ -1,16 +1,22 @@
 # Climate Monitor System Dashboard
 
-A full-stack IoT climate monitoring dashboard built with ESP32 devices, Next.js and Supabase.
+Dashboard full-stack de monitoreo de clima IoT, construido con dispositivos ESP32, Next.js y Neon.
 
 ## Features
 
-- Real-time temperature monitoring
-- Real-time humidity monitoring
-- ESP32 sensor integration
-- Supabase cloud database
-- Modern Next.js dashboard
-- Responsive UI
-- Ready for deployment
+- Monitoreo de temperatura en tiempo real
+- Monitoreo de humedad en tiempo real
+- Integración de sensores ESP32
+- Base de datos cloud en Neon (Postgres)
+- Widget de clima exterior (Open-Meteo) con selector de ubicación
+- Widget de calidad del aire (Open-Meteo)
+- Gráficos históricos con líneas de umbral
+- Comparación de métricas entre hoy y ayer
+- Actualización automática cada 10 segundos
+- Temas claro/oscuro
+- Dashboard moderno en Next.js
+- UI responsiva
+- Listo para desplegar
 
 ---
 
@@ -22,15 +28,17 @@ A full-stack IoT climate monitoring dashboard built with ESP32 devices, Next.js 
 - React
 - TypeScript
 - Tailwind CSS
+- Recharts
+- Framer Motion
 
 ### Backend / Cloud
 
-- Supabase
+- Neon (Postgres)
 
 ### Hardware
 
 - ESP32-WROOM-32
-- SHT3X temperature and humidity sensor
+- Sensor SHT3X de temperatura y humedad
 
 ---
 
@@ -39,57 +47,74 @@ A full-stack IoT climate monitoring dashboard built with ESP32 devices, Next.js 
 ```txt
 ESP32 + SHT3X Sensor
         ↓
-WiFi HTTP Requests
+POST /api/ingest (x-api-key)
         ↓
-Supabase Database
+Neon Database
         ↓
 Next.js Dashboard
 ```
 
 ---
 
+## Endpoints
+
+### `POST /api/ingest`
+
+Recibe lecturas desde los dispositivos ESP32.
+
+Requiere el header `x-api-key` con el valor de `INGEST_API_KEY`.
+
+```json
+{
+  "device_id": "esp32-01",
+  "temperature": 22.5,
+  "humidity": 55.2
+}
+```
+
+### `GET /api/sensor-data`
+
+Devuelve las lecturas de sensor en un rango de tiempo.
+
+Query params: `range` (`1h` | `3h` | `6h` | `24h` | `custom`), `start`, `end`.
+
+---
+
 ## Environment Variables
 
-Create a `.env.local` file:
+Cree un archivo `.env.local`:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+DATABASE_URL=postgresql://user:pass@ep-xxx.us-east-1.aws.neon.tech/neondb?sslmode=require
+INGEST_API_KEY=your-ingest-api-key
 NEXT_PUBLIC_DASHBOARD_TIME_ZONE=America/Santiago
 ```
+
+- `DATABASE_URL`: cadena de conexión de Neon (https://console.neon.tech)
+- `INGEST_API_KEY`: clave de API para la ingesta del dispositivo (puede generarla con `openssl rand -hex 32`)
+- `NEXT_PUBLIC_DASHBOARD_TIME_ZONE`: zona horaria del dashboard (opcional, por defecto `America/Santiago`)
 
 ---
 
 ## Run Locally
 
-Install dependencies:
+Instalar dependencias:
 
 ```bash
 pnpm install
 ```
 
-Start development server:
+Iniciar el servidor de desarrollo:
 
 ```bash
 pnpm dev
 ```
 
-Open:
+Abrir:
 
 ```txt
 http://localhost:3000
 ```
-
----
-
-## Future Improvements
-
-- Real-time live updates
-- Historical charts
-- OTA firmware updates
-- Multi-device support
-- Alerts and notifications
-- Device management panel
 
 ---
 

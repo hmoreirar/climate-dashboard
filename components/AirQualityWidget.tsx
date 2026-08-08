@@ -17,12 +17,12 @@ type AirQualityData = {
 };
 
 function getAqiLevel(aqi: number): { label: string; color: string; text: string } {
-  if (aqi <= 20) return { label: "Good", color: "bg-emerald-500", text: "text-emerald-400" };
-  if (aqi <= 40) return { label: "Fair", color: "bg-yellow-500", text: "text-yellow-400" };
-  if (aqi <= 60) return { label: "Moderate", color: "bg-orange-500", text: "text-orange-400" };
-  if (aqi <= 80) return { label: "Poor", color: "bg-red-500", text: "text-red-400" };
-  if (aqi <= 100) return { label: "Very Poor", color: "bg-purple-500", text: "text-purple-400" };
-  return { label: "Extreme", color: "bg-rose-700", text: "text-rose-400" };
+  if (aqi <= 20) return { label: "Buena", color: "bg-emerald-500", text: "text-emerald-400" };
+  if (aqi <= 40) return { label: "Aceptable", color: "bg-yellow-500", text: "text-yellow-400" };
+  if (aqi <= 60) return { label: "Moderada", color: "bg-orange-500", text: "text-orange-400" };
+  if (aqi <= 80) return { label: "Mala", color: "bg-red-500", text: "text-red-400" };
+  if (aqi <= 100) return { label: "Muy mala", color: "bg-purple-500", text: "text-purple-400" };
+  return { label: "Extrema", color: "bg-rose-700", text: "text-rose-400" };
 }
 
 export default function AirQualityWidget() {
@@ -42,7 +42,7 @@ export default function AirQualityWidget() {
     fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}`)
       .then((res) => res.json())
       .then((json) => setData(json as AirQualityData))
-      .catch(() => setError("Failed to load air quality data"));
+      .catch(() => setError("No se pudieron cargar los datos de calidad del aire"));
   }, [location]);
 
   if (!location) return null;
@@ -50,7 +50,7 @@ export default function AirQualityWidget() {
   if (error) {
     return (
       <div className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover">
-        <p className="text-xs text-muted mb-1">Air Quality</p>
+        <p className="text-xs text-muted mb-1">Calidad del Aire</p>
         <p className="text-sm text-red-400">{error}</p>
       </div>
     );
@@ -77,7 +77,7 @@ export default function AirQualityWidget() {
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover"
     >
-      <p className="text-xs text-muted mb-3">Air Quality</p>
+      <p className="text-xs text-muted mb-3">Calidad del Aire</p>
 
       <div className="flex items-center gap-3 mb-4">
         <div className={`h-10 w-10 rounded-full ${level.color} flex items-center justify-center text-white text-sm font-bold`}>
@@ -85,7 +85,7 @@ export default function AirQualityWidget() {
         </div>
         <div>
           <p className={`text-lg font-bold ${level.text}`}>{level.label}</p>
-          <p className="text-xs text-muted">European AQI</p>
+          <p className="text-xs text-muted">Índice AQI Europeo</p>
         </div>
       </div>
 

@@ -48,7 +48,7 @@ export default function HistoricalAnalytics({ data }: Props) {
         className="flex w-full items-center justify-between p-4 sm:p-5 md:p-6 text-left"
         aria-expanded={isOpen}
       >
-        <h2 className="text-xl font-bold text-content">Historical Analytics</h2>
+        <h2 className="text-xl font-bold text-content">Análisis Histórico</h2>
         <motion.svg
           animate={{ rotate: isOpen ? 180 : 0 }}
           transition={{ duration: 0.2 }}
@@ -74,14 +74,14 @@ export default function HistoricalAnalytics({ data }: Props) {
             <div className="px-4 sm:px-5 md:px-6 pb-4 sm:pb-5 md:pb-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ComparisonCard
-                  label="Temperature"
+                  label="Temperatura"
                   current={comparison.current.temperature.avg}
                   previous={comparison.previous.temperature.avg}
                   change={comparison.temperatureChange}
                   unit="°C"
                 />
                 <ComparisonCard
-                  label="Humidity"
+                  label="Humedad"
                   current={comparison.current.humidity.avg}
                   previous={comparison.previous.humidity.avg}
                   change={comparison.humidityChange}
@@ -91,16 +91,16 @@ export default function HistoricalAnalytics({ data }: Props) {
 
               <div>
                 <h3 className="text-sm font-semibold text-muted mb-3">
-                  Recent Readings (last 50)
+                  Lecturas Recientes (últimas 50)
                 </h3>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-line text-muted">
-                        <th className="text-left py-2 pr-4 font-medium">Time</th>
+                        <th className="text-left py-2 pr-4 font-medium">Hora</th>
                         <th className="text-right px-2 font-medium">Temp</th>
-                        <th className="text-right px-2 font-medium">Humidity</th>
-                        <th className="text-right pl-4 font-medium">Device</th>
+                        <th className="text-right px-2 font-medium">Humedad</th>
+                        <th className="text-right pl-4 font-medium">Dispositivo</th>
                       </tr>
                     </thead>
                     <tbody>

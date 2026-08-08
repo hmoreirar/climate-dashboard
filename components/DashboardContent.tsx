@@ -86,7 +86,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
 
   const latestTemperature = latest?.temperature ?? null;
   const latestHumidity = latest?.humidity ?? null;
-  const latestDevice = latest?.device_id ?? "Unknown device";
+  const latestDevice = latest?.device_id ?? "Dispositivo desconocido";
 
   const tempLevel = getThresholdLevel(latestTemperature, "temperature");
   const humLevel = getThresholdLevel(latestHumidity, "humidity");
@@ -121,7 +121,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
             Climate Monitor
           </h1>
           <p className="text-sm text-muted mt-1">
-            Live temperature and humidity telemetry
+            Telemetría en vivo de temperatura y humedad
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -135,7 +135,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
                     ? "bg-amber-500"
                     : "bg-emerald-500"
               }`}
-              title={refreshing ? "Refreshing..." : refError ? "Refresh failed" : "Live"}
+              title={refreshing ? "Actualizando..." : refError ? "Error al actualizar" : "En vivo"}
             />
             <p className="text-xs text-muted whitespace-nowrap">{dataCount} lecturas</p>
           </div>
@@ -156,22 +156,22 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
           )}
         </div>
         <span className="sr-only">
-          {isOnline ? "Dispositivo en linea" : "Dispositivo fuera de linea"}
+          {isOnline ? "Dispositivo en línea" : "Dispositivo fuera de línea"}
         </span>
         <div className="flex items-baseline gap-2">
           <p className={isOnline ? "text-emerald-400 font-medium" : "text-amber-400 font-medium"}>
-            {isOnline ? "Online" : "Offline"}
+            {isOnline ? "En línea" : "Fuera de línea"}
           </p>
           <span className="text-muted text-xs">
             &mdash; {isOnline
               ? `Actualizado ${formatLastUpdated(latest?.created_at)}`
-              : `Sin datos en los ultimos ${ONLINE_WINDOW_MINUTES} minutos`}
+              : `Sin datos en los últimos ${ONLINE_WINDOW_MINUTES} minutos`}
           </span>
         </div>
       </motion.div>
 
       <MetricCard
-        title="Temperature"
+        title="Temperatura"
         value={latestTemperature}
         unit="°C"
         level={tempLevel}
@@ -186,7 +186,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
         }
       />
       <MetricCard
-        title="Humidity"
+        title="Humedad"
         value={latestHumidity}
         unit="%"
         level={humLevel}
@@ -211,11 +211,11 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
       >
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-muted text-sm mb-1">Device</p>
+            <p className="text-muted text-sm mb-1">Dispositivo</p>
             <p className="text-xl font-semibold text-content font-mono">{latestDevice}</p>
           </div>
           <div className="text-right text-xs text-muted">
-            <p>Timezone: {getDashboardTimeZone()}</p>
+            <p>Zona horaria: {getDashboardTimeZone()}</p>
           </div>
         </div>
       </motion.div>
@@ -225,7 +225,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
           color="#f97316"
           data={chartData}
           metric="temperature"
-          title="Temperature History"
+          title="Historial de Temperatura"
           unit="°C"
         />
       </motion.div>
@@ -235,7 +235,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
           color="#38bdf8"
           data={chartData}
           metric="humidity"
-          title="Humidity History"
+          title="Historial de Humedad"
           unit="%"
         />
       </motion.div>
@@ -288,19 +288,19 @@ function MetricCard({
         </h2>
       ) : (
         <h2 className="text-4xl sm:text-5xl md:text-6xl font-bold text-muted">
-          No data
+          Sin datos
         </h2>
       )}
 
       <div className={`mt-4 flex gap-4 text-sm ${levelText(level)}`}>
         <span className="tabular-nums">
-          Min <span className="font-medium">{stats.min.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
+          Mín <span className="font-medium">{stats.min.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
         </span>
         <span className="tabular-nums">
-          Avg <span className="font-medium">{stats.avg.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
+          Prom <span className="font-medium">{stats.avg.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
         </span>
         <span className="tabular-nums">
-          Max <span className="font-medium">{stats.max.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
+          Máx <span className="font-medium">{stats.max.toFixed(1)}{unit === "°C" ? "°" : unit}</span>
         </span>
       </div>
     </div>

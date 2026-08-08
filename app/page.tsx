@@ -36,8 +36,8 @@ export default async function Home({
           <div className="rounded-2xl border border-red-950 bg-red-950/40 p-8">
             <h1 className="text-3xl font-bold">Climate Monitor Dashboard</h1>
             <p className="mt-3 text-red-100">
-              Sensor data is temporarily unavailable. Check database
-              connectivity and try again.
+              Los datos del sensor no están disponibles temporalmente.
+              Verifique la conexión con la base de datos e intente de nuevo.
             </p>
           </div>
         </div>

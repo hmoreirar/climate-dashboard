@@ -58,7 +58,7 @@ export default function MetricChart({
       <div
         className="h-[320px] w-full"
         role="img"
-        aria-label={`Grafico de ${title}. ${data.length} puntos de datos.`}
+        aria-label={`Gráfico de ${title}. ${data.length} puntos de datos.`}
       >
         <ResponsiveContainer width="100%" height={320}>
           <LineChart data={data}>
@@ -84,7 +84,7 @@ export default function MetricChart({
                 if (typeof value === "number") {
                   return `${value}${unit}`;
                 }
-                return value == null ? "No data" : String(value);
+                return value == null ? "Sin datos" : String(value);
               }}
               labelFormatter={(value) => formatChartTooltipLabel(value as string)}
               labelStyle={{ color: "var(--muted)" }}

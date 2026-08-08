@@ -95,7 +95,7 @@ export const TIME_RANGES: { value: TimeRange; label: string }[] = [
   { value: "3h", label: "3h" },
   { value: "6h", label: "6h" },
   { value: "24h", label: "24h" },
-  { value: "custom", label: "Custom" },
+  { value: "custom", label: "Personalizado" },
 ];
 
 export function getSinceMs(range: TimeRange): number {

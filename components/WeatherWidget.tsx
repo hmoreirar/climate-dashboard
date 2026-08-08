@@ -41,20 +41,20 @@ function getWeatherIcon(code: WeatherCode, isDay = true): string {
 }
 
 function getWeatherLabel(code: WeatherCode): string {
-  if (code === 0) return "Clear";
-  if (code === 1) return "Mainly clear";
-  if (code === 2) return "Partly cloudy";
-  if (code === 3) return "Overcast";
-  if (code >= 45 && code <= 48) return "Foggy";
-  if (code >= 51 && code <= 55) return "Drizzle";
-  if (code >= 56 && code <= 57) return "Freezing drizzle";
-  if (code >= 61 && code <= 65) return "Rain";
-  if (code === 66 || code === 67) return "Freezing rain";
-  if (code >= 71 && code <= 77) return "Snow";
-  if (code >= 80 && code <= 82) return "Rain showers";
-  if (code >= 85 && code <= 86) return "Snow showers";
-  if (code >= 95) return "Thunderstorm";
-  return "Unknown";
+  if (code === 0) return "Despejado";
+  if (code === 1) return "Mayormente despejado";
+  if (code === 2) return "Parcialmente nublado";
+  if (code === 3) return "Nublado";
+  if (code >= 45 && code <= 48) return "Niebla";
+  if (code >= 51 && code <= 55) return "Llovizna";
+  if (code >= 56 && code <= 57) return "Llovizna helada";
+  if (code >= 61 && code <= 65) return "Lluvia";
+  if (code === 66 || code === 67) return "Lluvia helada";
+  if (code >= 71 && code <= 77) return "Nieve";
+  if (code >= 80 && code <= 82) return "Chubascos";
+  if (code >= 85 && code <= 86) return "Chubascos de nieve";
+  if (code >= 95) return "Tormenta";
+  return "Desconocido";
 }
 
 function getDayName(dateStr: string): string {
@@ -63,10 +63,10 @@ function getDayName(dateStr: string): string {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  if (date.toDateString() === today.toDateString()) return "Today";
-  if (date.toDateString() === tomorrow.toDateString()) return "Tomorrow";
+  if (date.toDateString() === today.toDateString()) return "Hoy";
+  if (date.toDateString() === tomorrow.toDateString()) return "Mañana";
 
-  return date.toLocaleDateString("en", { weekday: "short" });
+  return date.toLocaleDateString("es", { weekday: "short" });
 }
 
 type Props = {
@@ -94,7 +94,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
     fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
       .then((res) => res.json())
       .then((json) => setData(json as WeatherData))
-      .catch(() => setFetchError("Failed to load weather data"));
+      .catch(() => setFetchError("No se pudieron cargar los datos del clima"));
   }, [location]);
 
   if (locLoading) {
@@ -113,7 +113,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
     return (
       <div className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover">
         <div className="flex flex-col items-center gap-3 text-center">
-          <p className="text-sm text-muted">Set your location for weather data</p>
+          <p className="text-sm text-muted">Configure su ubicación para ver los datos del clima</p>
           <LocationPicker onSet={setManual} onClose={() => setShowPicker(false)} />
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
       <div className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover">
         <p className="text-sm text-red-400">{fetchError}</p>
         <button onClick={resetLocation} className="mt-2 text-xs text-muted hover:text-content underline">
-          Change location
+          Cambiar ubicación
         </button>
       </div>
     );
@@ -143,11 +143,11 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
     >
       <div className="flex items-start justify-between mb-3">
         <div>
-          <p className="text-xs text-muted">Weather</p>
+          <p className="text-xs text-muted">Clima</p>
           <p className="text-xs text-muted font-mono">{location.label}</p>
         </div>
-        <button onClick={resetLocation} className="text-xs text-muted hover:text-content underline" title="Change location">
-          Change
+        <button onClick={resetLocation} className="text-xs text-muted hover:text-content underline" title="Cambiar ubicación">
+          Cambiar
         </button>
       </div>
 
@@ -163,15 +163,15 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
 
       <div className="grid grid-cols-3 gap-2 text-xs text-muted mb-4">
         <div>
-          <span className="block">Humidity</span>
+          <span className="block">Humedad</span>
           <span className="text-content font-medium">{current.relative_humidity_2m}%</span>
         </div>
         <div>
-          <span className="block">Wind</span>
+          <span className="block">Viento</span>
           <span className="text-content font-medium">{current.wind_speed_10m.toFixed(0)} km/h</span>
         </div>
         <div>
-          <span className="block">Feels like</span>
+          <span className="block">Sensación</span>
           <span className="text-content font-medium">{current.apparent_temperature.toFixed(1)}°C</span>
         </div>
       </div>
@@ -180,7 +180,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
         <div className="border-t border-line pt-3 mb-3">
           <div className="flex items-center justify-around text-xs">
             <div className="text-center">
-              <span className="text-muted block">Indoor</span>
+              <span className="text-muted block">Interior</span>
               <span className="text-content font-medium tabular-nums">
                 {indoorTemp.toFixed(1)}°C
               </span>
@@ -190,7 +190,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
             </div>
             <div className="text-muted text-lg">|</div>
             <div className="text-center">
-              <span className="text-muted block">Outdoor</span>
+              <span className="text-muted block">Exterior</span>
               <span className="text-content font-medium tabular-nums">
                 {current.temperature_2m.toFixed(1)}°C
               </span>
@@ -254,7 +254,7 @@ function LocationPicker({
       <div className="flex gap-2">
         <input
           type="text"
-          placeholder="Search city..."
+          placeholder="Buscar ciudad..."
           value={city}
           onChange={(e) => setCity(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleCitySearch()}
@@ -265,11 +265,11 @@ function LocationPicker({
           disabled={!city.trim()}
           className="px-3 py-1.5 text-sm rounded-lg bg-zinc-700 dark:bg-zinc-600 text-white disabled:opacity-50"
         >
-          Search
+          Buscar
         </button>
       </div>
       <div className="flex gap-2 items-center">
-        <span className="text-xs text-muted">Or coordinates:</span>
+        <span className="text-xs text-muted">O coordenadas:</span>
         <input
           type="text"
           placeholder="Lat"
@@ -289,7 +289,7 @@ function LocationPicker({
           disabled={!lat || !lng}
           className="px-3 py-1.5 text-sm rounded-lg bg-zinc-700 dark:bg-zinc-600 text-white disabled:opacity-50"
         >
-          Set
+          Fijar
         </button>
       </div>
     </div>

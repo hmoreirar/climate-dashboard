@@ -46,7 +46,7 @@ export function useLocation() {
     }
 
     if (!navigator.geolocation) {
-      setError("Geolocation not available");
+      setError("La geolocalización no está disponible");
       setLoading(false);
       setShowPicker(true);
       return;
@@ -64,7 +64,7 @@ export function useLocation() {
         setLoading(false);
       },
       () => {
-        setError("Location permission denied");
+        setError("Permiso de ubicación denegado");
         setLoading(false);
         setShowPicker(true);
       },
