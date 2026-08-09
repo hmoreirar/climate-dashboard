@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "@/lib/useLocation";
+import { formatRelativeTime } from "@/lib/sensor";
 
 type AirQualityCurrent = {
   european_aqi: number;
@@ -25,24 +26,46 @@ function getAqiLevel(aqi: number): { label: string; color: string; text: string 
   return { label: "Extrema", color: "bg-rose-700", text: "text-rose-400" };
 }
 
+const AQI_REFRESH_MS = 10 * 60_000;
+
 export default function AirQualityWidget() {
   const { location } = useLocation();
   const [data, setData] = useState<AirQualityData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   useEffect(() => {
     if (!location) return;
 
-    const params = new URLSearchParams({
-      latitude: location.latitude.toString(),
-      longitude: location.longitude.toString(),
-      current: "european_aqi,pm2_5,pm10,nitrogen_dioxide,ozone",
-    });
+    const loc = location;
+    let ignore = false;
 
-    fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}`)
-      .then((res) => res.json())
-      .then((json) => setData(json as AirQualityData))
-      .catch(() => setError("No se pudieron cargar los datos de calidad del aire"));
+    async function loadAirQuality() {
+      const params = new URLSearchParams({
+        latitude: loc.latitude.toString(),
+        longitude: loc.longitude.toString(),
+        current: "european_aqi,pm2_5,pm10,nitrogen_dioxide,ozone",
+      });
+
+      try {
+        const res = await fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?${params}`);
+        const json = await res.json();
+        if (ignore) return;
+        setData(json as AirQualityData);
+        setError(null);
+        setLastUpdated(Date.now());
+      } catch {
+        if (ignore) return;
+        setError("No se pudieron cargar los datos de calidad del aire");
+      }
+    }
+
+    loadAirQuality();
+    const interval = setInterval(loadAirQuality, AQI_REFRESH_MS);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
   }, [location]);
 
   if (!location) return null;
@@ -78,6 +101,11 @@ export default function AirQualityWidget() {
       className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover"
     >
       <p className="text-xs text-muted mb-3">Calidad del Aire</p>
+      {lastUpdated != null && (
+        <p className="text-[10px] text-muted -mt-2 mb-2">
+          Actualizado {formatRelativeTime(new Date(lastUpdated).toISOString())}
+        </p>
+      )}
 
       <div className="flex items-center gap-3 mb-4">
         <div className={`h-10 w-10 rounded-full ${level.color} flex items-center justify-center text-white text-sm font-bold`}>

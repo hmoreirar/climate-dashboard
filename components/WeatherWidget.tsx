@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "@/lib/useLocation";
+import { formatRelativeTime } from "@/lib/sensor";
 
 type WeatherCode = number;
 
@@ -74,27 +75,49 @@ type Props = {
   indoorHumidity?: number | null;
 };
 
+const WEATHER_REFRESH_MS = 5 * 60_000;
+
 export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
   const { location, loading: locLoading, error: locError, showPicker, setManual, resetLocation, setShowPicker } = useLocation();
   const [data, setData] = useState<WeatherData | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<number | null>(null);
 
   useEffect(() => {
     if (!location) return;
 
-    const params = new URLSearchParams({
-      latitude: location.latitude.toString(),
-      longitude: location.longitude.toString(),
-      current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m",
-      daily: "temperature_2m_max,temperature_2m_min,weather_code",
-      timezone: "auto",
-      forecast_days: "3",
-    });
+    const loc = location;
+    let ignore = false;
 
-    fetch(`https://api.open-meteo.com/v1/forecast?${params}`)
-      .then((res) => res.json())
-      .then((json) => setData(json as WeatherData))
-      .catch(() => setFetchError("No se pudieron cargar los datos del clima"));
+    async function loadWeather() {
+      const params = new URLSearchParams({
+        latitude: loc.latitude.toString(),
+        longitude: loc.longitude.toString(),
+        current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m",
+        daily: "temperature_2m_max,temperature_2m_min,weather_code",
+        timezone: "auto",
+        forecast_days: "3",
+      });
+
+      try {
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);
+        const json = await res.json();
+        if (ignore) return;
+        setData(json as WeatherData);
+        setFetchError(null);
+        setLastUpdated(Date.now());
+      } catch {
+        if (ignore) return;
+        setFetchError("No se pudieron cargar los datos del clima");
+      }
+    }
+
+    loadWeather();
+    const interval = setInterval(loadWeather, WEATHER_REFRESH_MS);
+    return () => {
+      ignore = true;
+      clearInterval(interval);
+    };
   }, [location]);
 
   if (locLoading) {
@@ -145,6 +168,11 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
         <div>
           <p className="text-xs text-muted">Clima</p>
           <p className="text-xs text-muted font-mono">{location.label}</p>
+          {lastUpdated != null && (
+            <p className="text-[10px] text-muted mt-0.5">
+              Actualizado {formatRelativeTime(new Date(lastUpdated).toISOString())}
+            </p>
+          )}
         </div>
         <button onClick={resetLocation} className="text-xs text-muted hover:text-content underline" title="Cambiar ubicación">
           Cambiar
