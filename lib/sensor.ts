@@ -208,10 +208,6 @@ export function formatDateInput(date: Date): string {
   return dateInputFormatter.format(date);
 }
 
-export function getDashboardTimeZone() {
-  return DASHBOARD_TIME_ZONE;
-}
-
 export function isDeviceOnline(
   reading: SensorReading | null | undefined,
   staleAfterMinutes = 10

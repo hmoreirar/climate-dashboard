@@ -24,6 +24,7 @@ export default function Loading() {
           <div className="col-span-1 md:col-span-2 flex items-center gap-3">
             <div className="h-3 w-3 rounded-full bg-card" />
             <div className="h-4 w-56 rounded bg-card" />
+            <div className="h-3 w-24 rounded bg-card" />
           </div>
 
           <div className="rounded-2xl border border-line bg-card/80 p-4 sm:p-5 md:p-8">
@@ -89,16 +90,6 @@ export default function Loading() {
                 <div className="h-12 rounded-lg border border-line bg-card" />
                 <div className="h-12 rounded-lg border border-line bg-card" />
               </div>
-            </div>
-          </div>
-
-          <div className="col-span-1 md:col-span-2 rounded-2xl border border-line bg-card/80 p-4 sm:p-5 md:p-6">
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="h-3 w-12 rounded bg-card" />
-                <div className="h-6 w-40 rounded bg-card" />
-              </div>
-              <div className="h-3 w-32 rounded bg-card" />
             </div>
           </div>
 

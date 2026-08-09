@@ -13,7 +13,6 @@ import {
   buildChartSeries,
   computeStats,
   formatRelativeTime,
-  getDashboardTimeZone,
   getThresholdLevel,
   isDeviceOnline,
   type SensorReading,
@@ -146,7 +145,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
 
       <motion.div
         variants={fadeUp}
-        className="col-span-1 md:col-span-2 flex items-center gap-3"
+        className="col-span-1 md:col-span-2 flex flex-wrap items-center gap-x-3 gap-y-1"
       >
         <div className="relative flex items-center justify-center">
           <div className={`h-3 w-3 rounded-full ${statusColor}`} role="status" aria-hidden="true" />
@@ -169,6 +168,10 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
               : `Sin datos en los últimos ${ONLINE_WINDOW_MINUTES} minutos`}
           </span>
         </div>
+        <span className="text-muted text-xs">·</span>
+        <span className="text-muted text-xs font-mono" title="Dispositivo">
+          {latestDevice}
+        </span>
       </motion.div>
 
       <MetricCard
@@ -204,21 +207,6 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
       <motion.div variants={fadeUp} className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
         <WeatherWidget indoorTemp={latestTemperature} indoorHumidity={latestHumidity} />
         <AirQualityWidget />
-      </motion.div>
-
-      <motion.div
-        variants={fadeUp}
-        className="col-span-1 md:col-span-2 rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 md:p-6 transition-colors duration-300 hover:border-line-hover"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-muted text-sm mb-1">Dispositivo</p>
-            <p className="text-xl font-semibold text-content font-mono">{latestDevice}</p>
-          </div>
-          <div className="text-right text-xs text-muted">
-            <p>Zona horaria: {getDashboardTimeZone()}</p>
-          </div>
-        </div>
       </motion.div>
 
       <motion.div variants={fadeUp} className="col-span-1 md:col-span-2">
