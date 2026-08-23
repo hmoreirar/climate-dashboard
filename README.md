@@ -82,9 +82,35 @@ Query params: `range` (`1h` | `3h` | `6h` | `24h` | `7d` | `custom`), `start`, `
 
 ## Cadencia de medición
 
-El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 30 segundos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
+El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 60 segundos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
 
 ---
+
+## Base de datos
+
+Cree la tabla ejecutando una vez el siguiente archivo en el SQL Editor de Neon:
+
+```txt
+migrations/001_create_sensor_data.sql
+```
+
+O ejecute manualmente:
+
+```sql
+create table if not exists sensor_data (
+  id bigint generated always as identity primary key,
+  device_id text not null,
+  temperature double precision not null,
+  humidity double precision not null,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists sensor_data_created_at_idx
+  on sensor_data (created_at desc);
+
+create index if not exists sensor_data_device_idx
+  on sensor_data (device_id, created_at desc);
+```
 
 ## Environment Variables
 

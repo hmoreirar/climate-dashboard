@@ -1,5 +1,10 @@
 import { sql } from "@/lib/neon";
-import { getDateRange, type SensorReading, type TimeRange } from "@/lib/sensor";
+import {
+  getDateRange,
+  toSensorReading,
+  type SensorRow,
+  type TimeRange,
+} from "@/lib/sensor";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -10,14 +15,14 @@ export async function GET(request: Request) {
   const { start, end } = getDateRange(range, customStart, customEnd);
 
   try {
-    const data = await sql<SensorReading[]>`
+    const rows = await sql<SensorRow[]>`
       SELECT created_at, device_id, humidity, temperature
       FROM sensor_data
       WHERE created_at >= ${start} AND created_at <= ${end}
       ORDER BY created_at DESC
       LIMIT 15000
     `;
-    return Response.json({ data });
+    return Response.json({ data: rows.map(toSensorReading) });
   } catch (error) {
     return Response.json({ error: (error as Error).message }, { status: 500 });
   }

@@ -4,7 +4,9 @@ import DashboardContent from "@/components/DashboardContent";
 import {
   getSinceMs,
   type SensorReading,
+  type SensorRow,
   type TimeRange,
+  toSensorReading,
 } from "@/lib/sensor";
 
 export const revalidate = 0;
@@ -20,13 +22,14 @@ export default async function Home({
 
   let data: SensorReading[];
   try {
-    data = await sql<SensorReading[]>`
+    const rows = await sql<SensorRow[]>`
       SELECT created_at, device_id, humidity, temperature
       FROM sensor_data
       WHERE created_at >= ${since}
       ORDER BY created_at DESC
       LIMIT 15000
     `;
+    data = rows.map(toSensorReading);
   } catch (error) {
     console.error("Failed to load sensor_data", error);
 

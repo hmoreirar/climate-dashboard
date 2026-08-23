@@ -20,7 +20,7 @@ import {
 } from "@/lib/sensor";
 
 const ONLINE_WINDOW_MINUTES = 5;
-const REFRESH_INTERVAL_MS = 30_000;
+const REFRESH_INTERVAL_MS = 60_000;
 
 type Props = {
   initialData: SensorReading[];

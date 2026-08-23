@@ -5,6 +5,25 @@ export type SensorReading = {
   temperature: number | null;
 };
 
+export type SensorRow = {
+  created_at: Date | string;
+  device_id: string | null;
+  humidity: number | null;
+  temperature: number | null;
+};
+
+export function toSensorReading(row: SensorRow): SensorReading {
+  return {
+    device_id: row.device_id,
+    humidity: row.humidity,
+    temperature: row.temperature,
+    created_at:
+      typeof row.created_at === "string"
+        ? row.created_at
+        : row.created_at.toISOString(),
+  };
+}
+
 export type MetricKey = "temperature" | "humidity";
 
 export type PeriodStats = {
