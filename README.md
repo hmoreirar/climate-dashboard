@@ -78,6 +78,22 @@ Devuelve las lecturas de sensor en un rango de tiempo.
 
 Query params: `range` (`1h` | `3h` | `6h` | `24h` | `7d` | `custom`), `start`, `end`.
 
+### `GET /api/firmware/latest`
+
+Informa la versión más reciente del firmware para OTA.
+
+Query params: `current` (versión instalada en el dispositivo).
+
+Respuesta:
+
+```json
+{
+  "version": "1.0.1",
+  "url": "https://host/firmware/1.0.1.bin",
+  "updateAvailable": true
+}
+```
+
 ---
 
 ## Cadencia de medición
@@ -130,12 +146,9 @@ NEXT_PUBLIC_DASHBOARD_TIME_ZONE=America/Santiago
 
 ## Próximas mejoras (pendientes)
 
-- Actualización OTA del firmware del ESP32 (over-the-air). Plan:
-  - El dispositivo envía su versión de firmware en el `POST /api/ingest`.
-  - Agregar un endpoint `/api/firmware/latest` que sirva el binario `.bin`.
-  - El ESP32 consulta si hay versión nueva, descarga el firmware por HTTP y hace reboot.
-  - Requiere tabla de particiones OTA (`ota_0`/`ota_1`) en el firmware.
 - Configurar el firmware del ESP32 para la cadencia de medición de 1 minuto (pendiente, requiere la placa a mano).
+
+> La actualización OTA ya está implementada: el dispositivo reporta su versión en `POST /api/ingest`, el endpoint `/api/firmware/latest` sirve la versión y el binario, y el ESP32 aplica el firmware por aire con particiones `ota_0`/`ota_1`.
 
 ---
 

@@ -12,7 +12,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { device_id?: string; temperature?: number; humidity?: number };
+  let body: {
+    device_id?: string;
+    temperature?: number;
+    humidity?: number;
+    firmware_version?: string;
+  };
 
   try {
     body = await request.json();
@@ -27,10 +32,22 @@ export async function POST(request: Request) {
     );
   }
 
+  if (body.firmware_version != null && typeof body.firmware_version !== "string") {
+    return Response.json(
+      { error: "firmware_version must be a string" },
+      { status: 400 }
+    );
+  }
+
   try {
     await sql`
-      INSERT INTO sensor_data (device_id, temperature, humidity)
-      VALUES (${body.device_id}, ${body.temperature}, ${body.humidity})
+      INSERT INTO sensor_data (
+        device_id,
+        temperature,
+        humidity,
+        firmware_version
+      )
+      VALUES (${body.device_id}, ${body.temperature}, ${body.humidity}, ${body.firmware_version ?? null})
     `;
     return Response.json({ ok: true }, { status: 201 });
   } catch (err) {

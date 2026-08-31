@@ -8,6 +8,9 @@
 #define INGEST_URL "https://climate-dashboard-one.vercel.app/api/ingest"
 #define INGEST_API_KEY "your-ingest-api-key"
 
+// Endpoint para consultar actualizaciones de firmware (OTA)
+#define OTA_CHECK_URL "https://climate-dashboard-one.vercel.app/api/firmware/latest"
+
 // Identificador del dispositivo
 #define DEVICE_ID "trueno-01"
 
