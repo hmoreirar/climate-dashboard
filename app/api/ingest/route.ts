@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     temperature?: number;
     humidity?: number;
     firmware_version?: string;
+    rssi?: number;
   };
 
   try {
@@ -39,15 +40,26 @@ export async function POST(request: Request) {
     );
   }
 
+  if (body.rssi != null && typeof body.rssi !== "number") {
+    return Response.json({ error: "rssi must be a number" }, { status: 400 });
+  }
+
   try {
     await sql`
       INSERT INTO sensor_data (
         device_id,
         temperature,
         humidity,
-        firmware_version
+        firmware_version,
+        rssi
       )
-      VALUES (${body.device_id}, ${body.temperature}, ${body.humidity}, ${body.firmware_version ?? null})
+      VALUES (
+        ${body.device_id},
+        ${body.temperature},
+        ${body.humidity},
+        ${body.firmware_version ?? null},
+        ${body.rssi ?? null}
+      )
     `;
     return Response.json({ ok: true }, { status: 201 });
   } catch (err) {

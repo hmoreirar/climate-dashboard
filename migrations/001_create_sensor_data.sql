@@ -7,6 +7,7 @@ create table if not exists sensor_data (
   temperature double precision not null,
   humidity double precision not null,
   firmware_version text,
+  rssi integer,
   created_at timestamptz not null default now()
 );
 
