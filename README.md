@@ -12,7 +12,7 @@ Dashboard full-stack de monitoreo de clima IoT, construido con dispositivos ESP3
 - Widget de calidad del aire (Open-Meteo)
 - Gráficos históricos con líneas de umbral
 - Comparación de métricas entre hoy y ayer
-- Actualización automática cada 10 segundos
+- Actualización automática del dashboard cada 5 minutos
 - Temas claro/oscuro
 - Dashboard moderno en Next.js
 - UI responsiva
@@ -98,7 +98,7 @@ Respuesta:
 
 ## Cadencia de medición
 
-El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 60 segundos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
+El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 5 minutos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
 
 ---
 
@@ -117,7 +117,9 @@ create table if not exists sensor_data (
   id bigint generated always as identity primary key,
   device_id text not null,
   temperature double precision not null,
-  humidity double precision not null,
+   humidity double precision not null,
+   firmware_version text,
+   rssi integer,
   created_at timestamptz not null default now()
 );
 

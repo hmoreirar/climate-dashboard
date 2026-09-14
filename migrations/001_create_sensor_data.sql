@@ -1,6 +1,3 @@
--- Climate Monitor: tabla de lecturas de sensores.
--- Ejecutar una vez en el SQL Editor de Neon.
-
 create table if not exists sensor_data (
   id bigint generated always as identity primary key,
   device_id text not null,

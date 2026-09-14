@@ -20,7 +20,7 @@ import {
 } from "@/lib/sensor";
 
 const ONLINE_WINDOW_MINUTES = 5;
-const REFRESH_INTERVAL_MS = 60_000;
+const REFRESH_INTERVAL_MS = 5 * 60_000;
 
 type Props = {
   initialData: SensorReading[];
@@ -45,6 +45,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
   const [refError, setRefError] = useState(false);
 
   const fetchData = useCallback(async (r: TimeRange, start?: string, end?: string) => {
+    if (refreshing) return;
     setRefreshing(true);
     const params = new URLSearchParams({ range: r });
     if (start) params.set("start", start);
@@ -59,7 +60,7 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
     } finally {
       setRefreshing(false);
     }
-  }, []);
+  }, [refreshing]);
 
   useEffect(() => {
     const interval = setInterval(() => fetchData(range), REFRESH_INTERVAL_MS);

@@ -26,11 +26,22 @@ export async function POST(request: Request) {
     return Response.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  if (!body.device_id || body.temperature == null || body.humidity == null) {
+  if (
+    typeof body.device_id !== "string" ||
+    !body.device_id.trim() ||
+    typeof body.temperature !== "number" ||
+    !Number.isFinite(body.temperature) ||
+    typeof body.humidity !== "number" ||
+    !Number.isFinite(body.humidity)
+  ) {
     return Response.json(
       { error: "Missing required fields: device_id, temperature, humidity" },
       { status: 400 }
     );
+  }
+
+  if (body.temperature < -80 || body.temperature > 100 || body.humidity < 0 || body.humidity > 100) {
+    return Response.json({ error: "Temperature or humidity is out of range" }, { status: 400 });
   }
 
   if (body.firmware_version != null && typeof body.firmware_version !== "string") {

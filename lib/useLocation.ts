@@ -10,12 +10,6 @@ type Location = {
 
 const STORAGE_KEY = "dashboard-location";
 
-const DEFAULT_LOCATION: Location = {
-  latitude: -33.4569,
-  longitude: -70.6483,
-  label: "Santiago, Chile",
-};
-
 function loadStored(): Location | null {
   if (typeof window === "undefined") return null;
   try {
@@ -32,23 +26,15 @@ function store(loc: Location) {
 }
 
 export function useLocation() {
-  const [location, setLocation] = useState<Location | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [location, setLocation] = useState<Location | null>(() => loadStored());
+  const [loading, setLoading] = useState(() => loadStored() === null);
   const [error, setError] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
 
   useEffect(() => {
-    const stored = loadStored();
-    if (stored) {
-      setLocation(stored);
-      setLoading(false);
-      return;
-    }
+    if (location) return;
 
     if (!navigator.geolocation) {
-      setError("La geolocalización no está disponible");
-      setLoading(false);
-      setShowPicker(true);
       return;
     }
 
@@ -70,7 +56,7 @@ export function useLocation() {
       },
       { timeout: 10000, enableHighAccuracy: false },
     );
-  }, []);
+  }, [location]);
 
   const setManual = useCallback((lat: number, lng: number, label: string) => {
     const loc: Location = { latitude: lat, longitude: lng, label };

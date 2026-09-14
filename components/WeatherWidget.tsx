@@ -78,7 +78,7 @@ type Props = {
 const WEATHER_REFRESH_MS = 5 * 60_000;
 
 export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
-  const { location, loading: locLoading, error: locError, showPicker, setManual, resetLocation, setShowPicker } = useLocation();
+  const { location, loading: locLoading, showPicker, setManual, resetLocation } = useLocation();
   const [data, setData] = useState<WeatherData | null>(null);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
@@ -137,7 +137,7 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
       <div className="rounded-2xl border border-line bg-card/80 backdrop-blur-sm p-4 sm:p-5 transition-colors duration-300 hover:border-line-hover">
         <div className="flex flex-col items-center gap-3 text-center">
           <p className="text-sm text-muted">Configure su ubicación para ver los datos del clima</p>
-          <LocationPicker onSet={setManual} onClose={() => setShowPicker(false)} />
+           <LocationPicker onSet={setManual} />
         </div>
       </div>
     );
@@ -246,10 +246,8 @@ export default function WeatherWidget({ indoorTemp, indoorHumidity }: Props) {
 
 function LocationPicker({
   onSet,
-  onClose,
 }: {
   onSet: (lat: number, lng: number, label: string) => void;
-  onClose: () => void;
 }) {
   const [lat, setLat] = useState("");
   const [lng, setLng] = useState("");

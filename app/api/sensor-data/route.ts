@@ -8,7 +8,12 @@ import {
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const range = (searchParams.get("range") ?? "24h") as TimeRange;
+  const requestedRange = searchParams.get("range") ?? "24h";
+  const validRanges: TimeRange[] = ["1h", "3h", "6h", "24h", "7d", "custom"];
+  if (!validRanges.includes(requestedRange as TimeRange)) {
+    return Response.json({ error: "Invalid range" }, { status: 400 });
+  }
+  const range = requestedRange as TimeRange;
   const customStart = searchParams.get("start");
   const customEnd = searchParams.get("end");
 
@@ -20,7 +25,7 @@ export async function GET(request: Request) {
       FROM sensor_data
       WHERE created_at >= ${start} AND created_at <= ${end}
       ORDER BY created_at DESC
-      LIMIT 15000
+      LIMIT 12000
     `;
     return Response.json({ data: rows.map(toSensorReading) });
   } catch (error) {

@@ -17,7 +17,7 @@ function getSql() {
 
 export function sql<T extends Record<string, unknown>[]>(
   strings: TemplateStringsArray,
-  ...values: any[]
+  ...values: unknown[]
 ): Promise<T> {
-  return getSql()(strings, ...values)
+  return getSql()(strings, ...values as never[])
 }
