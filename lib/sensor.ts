@@ -12,6 +12,18 @@ export type SensorRow = {
   temperature: number | null;
 };
 
+export type HourlySensorRow = {
+  bucket: Date | string;
+  device_id: string;
+  temperature_min: number;
+  temperature_avg: number;
+  temperature_max: number;
+  humidity_min: number;
+  humidity_avg: number;
+  humidity_max: number;
+  reading_count: number;
+};
+
 export function toSensorReading(row: SensorRow): SensorReading {
   return {
     device_id: row.device_id,
@@ -21,6 +33,15 @@ export function toSensorReading(row: SensorRow): SensorReading {
       typeof row.created_at === "string"
         ? row.created_at
         : row.created_at.toISOString(),
+  };
+}
+
+export function hourlyRowToReading(row: HourlySensorRow): SensorReading {
+  return {
+    device_id: row.device_id,
+    temperature: row.temperature_avg,
+    humidity: row.humidity_avg,
+    created_at: typeof row.bucket === "string" ? row.bucket : row.bucket.toISOString(),
   };
 }
 

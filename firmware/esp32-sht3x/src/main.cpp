@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <WiFi.h>
-#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Update.h>
 #include <Preferences.h>
@@ -15,11 +14,12 @@
 const char* PREFS_NS = "diag";
 
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
-WiFiClientSecure client;
+WiFiClient client;
 HTTPClient http;
 Preferences prefs;
 
-const unsigned long MEASURE_INTERVAL_MS = 60UL * 1000UL;
+// Five-minute sampling is enough for this dashboard and avoids keeping Neon active continuously.
+const unsigned long MEASURE_INTERVAL_MS = 5UL * 60UL * 1000UL;
 const unsigned long OTA_CHECK_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
 const int MAX_CONSECUTIVE_FAILURES = 5;
 
@@ -234,7 +234,6 @@ void setup() {
   feedWatchdog();
 
   prefs.begin(PREFS_NS, false);
-  client.setInsecure();
   WiFi.setSleep(false);
 
   printBootBanner();
@@ -282,7 +281,7 @@ void loop() {
     feedWatchdog();
     sent = postReading(temperature, humidity);
     if (!sent) {
-      delay(2000);
+      delay((attempt + 1) * 5000UL);
     }
   }
 

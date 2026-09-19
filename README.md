@@ -98,7 +98,7 @@ Respuesta:
 
 ## Cadencia de medición
 
-El dispositivo ESP32 envía una lectura cada 1 minuto. A este ritmo se generan unas 1.440 filas por día (~525 mil al año) por dispositivo en Neon. El dashboard consulta nuevos datos cada 5 minutos y marca el dispositivo como fuera de línea si no recibe lecturas durante 5 minutos.
+El dispositivo ESP32 envía una lectura cada 5 minutos (~288 filas por día). Los datos crudos se conservan 30 días y el historial anterior se consulta mediante agregados horarios. El dashboard actualiza datos cada 15 minutos mientras la pestaña está visible.
 
 ---
 
@@ -148,7 +148,7 @@ NEXT_PUBLIC_DASHBOARD_TIME_ZONE=America/Santiago
 
 ## Próximas mejoras (pendientes)
 
-- Configurar el firmware del ESP32 para la cadencia de medición de 1 minuto (pendiente, requiere la placa a mano).
+- El firmware mide cada 5 minutos para reducir el consumo de cómputo de Neon.
 
 > La actualización OTA ya está implementada: el dispositivo reporta su versión en `POST /api/ingest`, el endpoint `/api/firmware/latest` sirve la versión y el binario, y el ESP32 aplica el firmware por aire con particiones `ota_0`/`ota_1`.
 

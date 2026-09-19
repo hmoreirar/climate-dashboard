@@ -1,6 +1,6 @@
 # Firmware ESP32 + SHT3X
 
-Monitorea temperatura y humedad y las envía cada 1 minuto a `POST /api/ingest`.
+Monitorea temperatura y humedad y las envía cada 5 minutos a `POST /api/ingest`.
 
 ## Requisitos
 
@@ -43,7 +43,7 @@ pio device monitor
 
 ## Cadencia
 
-Una lectura + POST cada 60 segundos. Ante fallo, reintenta hasta 3 veces con espera de 2 s.
+Una lectura + POST cada 5 minutos. Ante fallo, reintenta hasta 3 veces con espera progresiva.
 
 ## Actualización OTA
 
