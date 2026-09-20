@@ -9,7 +9,7 @@
 #include "esp_system.h"
 #include "secrets.h"
 
-#define FIRMWARE_VERSION "1.0.1"
+#define FIRMWARE_VERSION "1.0.2"
 
 const char* PREFS_NS = "diag";
 
@@ -26,6 +26,7 @@ const int MAX_CONSECUTIVE_FAILURES = 5;
 unsigned long lastMeasurement = 0;
 unsigned long lastOtaCheck = 0;
 int consecutiveFails = 0;
+bool firstMeasurement = true;
 
 void feedWatchdog() {
   esp_task_wdt_reset();
@@ -63,6 +64,16 @@ void connectWiFi() {
   feedWatchdog();
   WiFi.disconnect(false);
   WiFi.mode(WIFI_STA);
+  WiFi.setAutoReconnect(true);
+#ifdef USE_STATIC_IP
+  IPAddress local_IP(STATIC_IP);
+  IPAddress gateway(STATIC_GATEWAY);
+  IPAddress subnet(STATIC_SUBNET);
+  IPAddress dns(STATIC_DNS);
+  if (!WiFi.config(local_IP, gateway, subnet, dns)) {
+    Serial.println("WiFi.config falló (IP estática no aplicada)");
+  }
+#endif
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
   unsigned long start = millis();
@@ -98,6 +109,7 @@ bool postReading(float temperature, float humidity) {
 
   int code;
   if (!http.begin(client, INGEST_URL)) {
+    Serial.println("POST: http.begin fallido");
     savingDiagnostics(-1, WiFi.RSSI());
     return false;
   }
@@ -108,6 +120,9 @@ bool postReading(float temperature, float humidity) {
   http.end();
 
   savingDiagnostics(code, WiFi.RSSI());
+  if (code != 201 && code != 200) {
+    Serial.printf("POST HTTP %d\n", code);
+  }
 
   return code == 201 || code == 200;
 }
@@ -258,10 +273,11 @@ void loop() {
     checkForOTA();
   }
 
-  if (now - lastMeasurement < MEASURE_INTERVAL_MS) {
+  if (!firstMeasurement && now - lastMeasurement < MEASURE_INTERVAL_MS) {
     return;
   }
   lastMeasurement = now;
+  firstMeasurement = false;
 
   if (WiFi.status() != WL_CONNECTED) {
     consecutiveFails = 0;
