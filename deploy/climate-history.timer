@@ -1,0 +1,9 @@
+[Unit]
+Description=Run Climate Monitor history maintenance hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

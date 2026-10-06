@@ -1,0 +1,10 @@
+[Unit]
+Description=Maintain Climate Monitor hourly history
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=peter
+WorkingDirectory=/opt/climate-dashboard
+EnvironmentFile=/etc/climate-dashboard.env
+ExecStart=/bin/bash -c '/usr/bin/psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /opt/climate-dashboard/migrations/005_maintain_sensor_history.sql'

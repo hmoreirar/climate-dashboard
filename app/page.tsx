@@ -3,13 +3,15 @@ import DashboardContent from "@/components/DashboardContent";
 
 import {
   getSinceMs,
+  hourlyRowToReading,
   type SensorReading,
   type SensorRow,
+  type HourlySensorRow,
   type TimeRange,
   toSensorReading,
 } from "@/lib/sensor";
 
-export const revalidate = 0;
+export const revalidate = 60;
 
 export default async function Home({
   searchParams,
@@ -22,14 +24,28 @@ export default async function Home({
 
   let data: SensorReading[];
   try {
-    const rows = await sql<SensorRow[]>`
-      SELECT created_at, device_id, humidity, temperature
-      FROM sensor_data
-      WHERE created_at >= ${since}
-      ORDER BY created_at DESC
-       LIMIT 12000
-    `;
-    data = rows.map(toSensorReading);
+    const rangeMs = getSinceMs(range);
+    if (rangeMs > 24 * 86_400_000) {
+      const rows = await sql<HourlySensorRow[]>`
+        SELECT bucket, device_id, temperature_min, temperature_avg,
+               temperature_max, humidity_min, humidity_avg, humidity_max,
+               reading_count
+        FROM sensor_hourly
+        WHERE bucket >= ${since}
+        ORDER BY bucket DESC
+        LIMIT 1000
+      `;
+      data = rows.map(hourlyRowToReading);
+    } else {
+      const rows = await sql<SensorRow[]>`
+        SELECT created_at, device_id, humidity, temperature
+        FROM sensor_data
+        WHERE created_at >= ${since}
+        ORDER BY created_at DESC
+        LIMIT 500
+      `;
+      data = rows.map(toSensorReading);
+    }
   } catch (error) {
     console.error("Failed to load sensor_data", error);
 

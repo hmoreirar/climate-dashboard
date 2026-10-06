@@ -19,8 +19,8 @@ import {
   type TimeRange,
 } from "@/lib/sensor";
 
-const ONLINE_WINDOW_MINUTES = 5;
-const REFRESH_INTERVAL_MS = 5 * 60_000;
+const ONLINE_WINDOW_MINUTES = 10;
+const REFRESH_INTERVAL_MS = 15 * 60_000;
 
 type Props = {
   initialData: SensorReading[];
@@ -45,26 +45,39 @@ export default function DashboardContent({ initialData, initialRange }: Props) {
   const [refError, setRefError] = useState(false);
 
   const fetchData = useCallback(async (r: TimeRange, start?: string, end?: string) => {
-    if (refreshing) return;
     setRefreshing(true);
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 15_000);
     const params = new URLSearchParams({ range: r });
     if (start) params.set("start", start);
     if (end) params.set("end", end);
     try {
-      const res = await fetch(`/api/sensor-data?${params}`);
+      const res = await fetch(`/api/sensor-data?${params}`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      if (!res.ok) throw new Error("Failed to load sensor data");
       const json = await res.json();
       if (json.data) setData(json.data);
       setRefError(false);
     } catch {
       setRefError(true);
     } finally {
+      window.clearTimeout(timeout);
       setRefreshing(false);
     }
-  }, [refreshing]);
+  }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => fetchData(range), REFRESH_INTERVAL_MS);
-    return () => clearInterval(interval);
+    const refreshIfVisible = () => {
+      if (document.visibilityState === "visible") fetchData(range);
+    };
+    const interval = window.setInterval(refreshIfVisible, REFRESH_INTERVAL_MS);
+    document.addEventListener("visibilitychange", refreshIfVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", refreshIfVisible);
+    };
   }, [range, fetchData]);
 
   const handleRangeChange = useCallback(

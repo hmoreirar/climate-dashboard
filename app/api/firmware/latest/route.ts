@@ -17,12 +17,14 @@ function compareVersions(left: string, right: string): number {
 }
 
 export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const current = searchParams.get("current");
   const version = process.env.FIRMWARE_VERSION ?? DEFAULT_FIRMWARE_VERSION;
+  const host = request.headers.get("host") ?? "localhost:3000";
+  const proto = request.headers.get("x-forwarded-proto") ?? "http";
   const url =
     process.env.FIRMWARE_BIN_URL ??
-    `${origin}/firmware/${version}.bin`;
+    `${proto}://${host}/firmware/${version}.bin`;
 
   return Response.json({
     version,

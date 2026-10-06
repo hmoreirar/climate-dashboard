@@ -7,10 +7,17 @@ function getSql() {
     const connectionString = process.env.DATABASE_URL
     if (!connectionString) {
       throw new Error(
-        'Missing DATABASE_URL environment variable. Set DATABASE_URL to your Neon connection string.'
+        'Missing DATABASE_URL environment variable. Set it to your PostgreSQL connection string.'
       )
     }
-    _sql = postgres(connectionString, { ssl: 'require' })
+    _sql = postgres(connectionString, {
+      max: 3,
+      idle_timeout: 20,
+      connect_timeout: 10,
+      // TLS on by default so a missing var keeps Neon working. Local Postgres
+      // opts out explicitly with DATABASE_SSL=false.
+      ssl: process.env.DATABASE_SSL === 'false' ? false : 'require',
+    })
   }
   return _sql
 }

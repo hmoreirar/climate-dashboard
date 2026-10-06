@@ -1,0 +1,7 @@
+[Unit]
+Description=Backup Climate Monitor PostgreSQL
+After=postgresql.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/climate-dashboard/deploy/climate-backup.sh
