@@ -10,7 +10,7 @@
 #include "esp_system.h"
 #include "secrets.h"
 
-#define FIRMWARE_VERSION "1.0.1"
+#define FIRMWARE_VERSION "1.0.3"
 
 const char* PREFS_NS = "diag";
 
