@@ -55,6 +55,7 @@ export async function GET(request: Request) {
       headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" },
     });
   } catch (error) {
-    return Response.json({ error: (error as Error).message }, { status: 500 });
+    console.error("Failed to read sensor_data:", error);
+    return Response.json({ error: "Internal server error" }, { status: 500 });
   }
 }
