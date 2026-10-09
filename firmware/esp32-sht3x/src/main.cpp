@@ -10,7 +10,7 @@
 #include "esp_system.h"
 #include "secrets.h"
 
-#define FIRMWARE_VERSION "1.0.3"
+#define FIRMWARE_VERSION "1.0.4"
 
 const char* PREFS_NS = "diag";
 
@@ -113,14 +113,16 @@ bool postReading(float temperature, float humidity) {
   return code == 201 || code == 200;
 }
 
-int compareVersions(String current, String latest) {
-  int cMajor = 0, cMinor = 0, cPatch = 0;
-  int lMajor = 0, lMinor = 0, lPatch = 0;
-  sscanf(current.c_str(), "%d.%d.%d", &cMajor, &cMinor, &cPatch);
-  sscanf(latest.c_str(), "%d.%d.%d", &lMajor, &lMinor, &lPatch);
-  if (lMajor != cMajor) return lMajor > cMajor ? 1 : -1;
-  if (lMinor != cMinor) return lMinor > cMinor ? 1 : -1;
-  if (lPatch != cPatch) return lPatch > cPatch ? 1 : -1;
+// Returns > 0 when `offered` is newer than `installed`, 0 when they match,
+// and < 0 when `offered` is older. Callers must never install an older build.
+int compareVersions(String installed, String offered) {
+  int iMajor = 0, iMinor = 0, iPatch = 0;
+  int oMajor = 0, oMinor = 0, oPatch = 0;
+  sscanf(installed.c_str(), "%d.%d.%d", &iMajor, &iMinor, &iPatch);
+  sscanf(offered.c_str(), "%d.%d.%d", &oMajor, &oMinor, &oPatch);
+  if (oMajor != iMajor) return oMajor > iMajor ? 1 : -1;
+  if (oMinor != iMinor) return oMinor > iMinor ? 1 : -1;
+  if (oPatch != iPatch) return oPatch > iPatch ? 1 : -1;
   return 0;
 }
 
@@ -216,7 +218,10 @@ bool checkForOTA() {
   Serial.print(" | disponible: ");
   Serial.println(latestVersion);
 
-  if (compareVersions(FIRMWARE_VERSION, latestVersion) >= 0) {
+  // Upgrade only. The server can advertise an older build than the one
+  // currently running, and installing it would silently downgrade the
+  // device -- which also reverts the ingest key baked into the binary.
+  if (compareVersions(FIRMWARE_VERSION, latestVersion) <= 0) {
     Serial.println("Firmware al día, sin actualización");
     return false;
   }
