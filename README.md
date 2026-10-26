@@ -64,6 +64,24 @@ Recibe lecturas desde los dispositivos ESP32.
 
 Requiere el header `x-api-key` con el valor de `INGEST_API_KEY`.
 
+Lote de lecturas, la forma que usa el firmware:
+
+```json
+{
+  "device_id": "trueno-01",
+  "firmware_version": "1.1.0",
+  "rssi": -52,
+  "readings": [
+    { "temperature": 22.5, "humidity": 55.2, "measured_at": 1793026800 },
+    { "temperature": 22.6, "humidity": 55.0, "measured_at": 1793027100 }
+  ]
+}
+```
+
+`measured_at` es epoch en segundos. Si el dispositivo no tiene reloj sincronizado puede enviar `age_seconds` por lectura en su lugar.
+
+También acepta el formato de lectura única:
+
 ```json
 {
   "device_id": "esp32-01",
@@ -98,7 +116,11 @@ Respuesta:
 
 ## Cadencia de medición
 
-El dispositivo ESP32 envía una lectura cada 5 minutos (~288 filas por día). Los datos crudos se conservan 30 días y el historial anterior se consulta mediante agregados horarios. El dashboard actualiza datos cada 15 minutos mientras la pestaña está visible.
+El dispositivo mide cada 5 minutos y acumula las lecturas en un buffer en RAM. Las sube en lote cada 30 minutos (6 lecturas por POST).
+
+El lote importa: Neon suspende el compute tras ~5 minutos de inactividad, así que una escritura cada 5 minutos lo mantiene despierto 24/7 y agota la cuota gratuita de 100 CU-horas en unos 16 días. Con lotes de 30 minutos el consumo baja a ~33 CU-h/mes.
+
+El buffer guarda hasta 24 lecturas (2 horas) y vive en RAM, así que un fallo de red no pierde datos pero un reinicio del equipo sí vacía el buffer. Los datos crudos se conservan 30 días y el historial anterior se consulta mediante agregados horarios. El dashboard refresca cada 30 minutos mientras la pestaña está visible.
 
 ---
 
@@ -148,9 +170,10 @@ NEXT_PUBLIC_DASHBOARD_TIME_ZONE=America/Santiago
 
 ## Próximas mejoras (pendientes)
 
-- El firmware mide cada 5 minutos para reducir el consumo de cómputo de Neon.
+- El firmware mide cada 5 minutos y sube en lote cada 30 para no mantener despierto el compute de Neon.
+- Mover la clave de ingesta a NVS si se quiere reactivar el OTA.
 
-> La actualización OTA ya está implementada: el dispositivo reporta su versión en `POST /api/ingest`, el endpoint `/api/firmware/latest` sirve la versión y el binario, y el ESP32 aplica el firmware por aire con particiones `ota_0`/`ota_1`.
+> El OTA está desactivado a propósito: la clave de ingesta se compila dentro del binario, así que publicar un `firmware.bin` la expone a `strings(1)`. `public/firmware/` está vacío y las actualizaciones se hacen por USB. Reactivarlo exige clave en NVS, verificación SHA-256 del binario y pinning del certificado TLS (hoy se usa `setInsecure()`).
 
 ---
 

@@ -1,6 +1,6 @@
 # Firmware ESP32 + SHT3X
 
-Monitorea temperatura y humedad y las envía cada 5 minutos a `POST /api/ingest`.
+Monitorea temperatura y humedad cada 5 minutos y envía las lecturas en lote cada 30 minutos a `POST /api/ingest`.
 
 ## Requisitos
 
@@ -43,7 +43,13 @@ pio device monitor
 
 ## Cadencia
 
-Una lectura + POST cada 5 minutos. Ante fallo, reintenta hasta 3 veces con espera progresiva.
+Mide cada 5 minutos y guarda la lectura en un buffer en RAM. Sube el lote cada 30 minutos (6 lecturas por POST). Ante fallo, reintenta hasta 3 veces con espera progresiva y conserva las lecturas para el siguiente ciclo.
+
+El buffer aguanta 24 lecturas (2 horas). Vive en RAM, así que se pierde si el equipo se reinicia.
+
+La hora se sincroniza por NTP al arrancar. Si NTP no responde, cada lectura envía `age_seconds` en lugar de `measured_at`.
+
+El lote de 30 minutos no es cosmético: Neon suspende el compute tras ~5 minutos de inactividad, así que escribir cada 5 minutos lo mantiene despierto 24/7 y agota la cuota gratuita en unos 16 días.
 
 ## Actualización OTA
 
@@ -62,3 +68,5 @@ pio run
 4. Publicá el cambio (Vercel) y asegurate de que `FIRMWARE_VERSION` en el entorno coincida con la nueva versión.
 
 > Requiere tabla de particiones OTA (`ota_0`/`ota_1`) en el firmware, ya configurada en `partitions_ota.csv`.
+
+> **Aviso de seguridad.** La clave de ingesta se compila dentro del binario como `#define`. Cualquier `firmware.bin` servido públicamente la expone a `strings(1)`, así que publicar un binario equivale a publicar la clave. Por eso `public/firmware/` está vacío: el OTA queda desactivado y la actualización se hace por USB. Para reactivarlo hay que mover la clave a NVS, añadir verificación SHA-256 del binario y fijar el certificado TLS (hoy se usa `setInsecure()`).
