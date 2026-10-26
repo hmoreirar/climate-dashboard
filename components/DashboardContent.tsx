@@ -19,8 +19,10 @@ import {
   type TimeRange,
 } from "@/lib/sensor";
 
-const ONLINE_WINDOW_MINUTES = 10;
-const REFRESH_INTERVAL_MS = 15 * 60_000;
+// Readings upload in 30-minute batches, so the newest row is up to 30 min
+// old even when the device is healthy. The window needs headroom for that.
+const ONLINE_WINDOW_MINUTES = 40;
+const REFRESH_INTERVAL_MS = 30 * 60_000;
 
 type Props = {
   initialData: SensorReading[];

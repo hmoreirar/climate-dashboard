@@ -6,11 +6,12 @@
 #include <Update.h>
 #include <Preferences.h>
 #include <Adafruit_SHT31.h>
+#include <time.h>
 #include "esp_task_wdt.h"
 #include "esp_system.h"
 #include "secrets.h"
 
-#define FIRMWARE_VERSION "1.0.4"
+#define FIRMWARE_VERSION "1.1.0"
 
 const char* PREFS_NS = "diag";
 
@@ -19,12 +20,29 @@ WiFiClientSecure client;
 HTTPClient http;
 Preferences prefs;
 
-// Five-minute sampling is enough for this dashboard and avoids keeping Neon active continuously.
+// Sample every 5 minutes, upload every 30. Neon suspends after ~5 minutes
+// idle, so a 5-minute upload never lets it sleep. Batching 6 readings per
+// request lets the database stay asleep between uploads.
 const unsigned long MEASURE_INTERVAL_MS = 5UL * 60UL * 1000UL;
+const unsigned long UPLOAD_INTERVAL_MS = 30UL * 60UL * 1000UL;
+const unsigned long MIN_UPLOAD_GAP_MS = 2UL * 60UL * 1000UL;
 const unsigned long OTA_CHECK_INTERVAL_MS = 6UL * 60UL * 60UL * 1000UL;
 const int MAX_CONSECUTIVE_FAILURES = 5;
 
+// 24 readings = 2 hours of headroom if uploads keep failing.
+const int BUFFER_CAPACITY = 24;
+
+struct Reading {
+  float temperature;
+  float humidity;
+  time_t timestamp;  // 0 when the clock has not been synced yet
+};
+
+Reading uploadBuffer[BUFFER_CAPACITY];
+int bufferCount = 0;
+
 unsigned long lastMeasurement = 0;
+unsigned long lastUpload = 0;
 unsigned long lastOtaCheck = 0;
 int consecutiveFails = 0;
 
@@ -85,19 +103,84 @@ void connectWiFi() {
   }
 }
 
-bool postReading(float temperature, float humidity) {
+void syncTime() {
+  if (WiFi.status() != WL_CONNECTED) {
+    return;
+  }
+
+  configTime(0, 0, "pool.ntp.org", "time.google.com");
+  Serial.print("Sincronizando hora NTP");
+
+  unsigned long start = millis();
+  while (time(nullptr) < 1600000000 && millis() - start < 15000UL) {
+    delay(500);
+    feedWatchdog();
+    Serial.print(".");
+  }
+
+  if (time(nullptr) >= 1600000000) {
+    Serial.printf("\nHora sincronizada: %lu\n", (unsigned long)time(nullptr));
+  } else {
+    Serial.println();
+    Serial.println("NTP sin respuesta: se enviaran antiguedades relativas");
+  }
+}
+
+void pushReading(float temperature, float humidity) {
+  time_t nowEpoch = time(nullptr);
+  if (nowEpoch < 1600000000) {
+    nowEpoch = 0;
+  }
+
+  if (bufferCount >= BUFFER_CAPACITY) {
+    for (int i = 1; i < bufferCount; i++) {
+      uploadBuffer[i - 1] = uploadBuffer[i];
+    }
+    bufferCount--;
+    Serial.println("Buffer lleno: se descarta la lectura mas antigua");
+  }
+
+  uploadBuffer[bufferCount].temperature = temperature;
+  uploadBuffer[bufferCount].humidity = humidity;
+  uploadBuffer[bufferCount].timestamp = nowEpoch;
+  bufferCount++;
+}
+
+bool postBatch() {
+  if (bufferCount == 0) {
+    return true;
+  }
+
   if (WiFi.status() != WL_CONNECTED) {
     savingDiagnostics(-1, -1);
     return false;
   }
 
+  int pending = bufferCount;
   String payload = String("{\"device_id\":\"") + DEVICE_ID +
-                   "\",\"temperature\":" + String(temperature, 2) +
-                   ",\"humidity\":" + String(humidity, 2) +
-                   ",\"firmware_version\":\"" + FIRMWARE_VERSION + "\"" +
-                   ",\"rssi\":" + String(WiFi.RSSI()) + "}";
+                   "\",\"firmware_version\":\"" + FIRMWARE_VERSION + "\"" +
+                   ",\"rssi\":" + String(WiFi.RSSI()) +
+                   ",\"readings\":[";
 
-  int code;
+  for (int i = 0; i < bufferCount; i++) {
+    if (i > 0) {
+      payload += ",";
+    }
+    payload += String("{\"temperature\":") + String(uploadBuffer[i].temperature, 2) +
+               ",\"humidity\":" + String(uploadBuffer[i].humidity, 2);
+    if (uploadBuffer[i].timestamp > 0) {
+      payload += String(",\"measured_at\":") +
+                 String((unsigned long)uploadBuffer[i].timestamp);
+    } else {
+      // No clock: express the reading as an age relative to upload time.
+      unsigned long ageSeconds =
+          (unsigned long)(bufferCount - 1 - i) * (MEASURE_INTERVAL_MS / 1000UL);
+      payload += String(",\"age_seconds\":") + String(ageSeconds);
+    }
+    payload += "}";
+  }
+  payload += "]}";
+
   if (!http.begin(client, INGEST_URL)) {
     savingDiagnostics(-1, WiFi.RSSI());
     return false;
@@ -105,12 +188,18 @@ bool postReading(float temperature, float humidity) {
 
   http.addHeader("Content-Type", "application/json");
   http.addHeader("x-api-key", INGEST_API_KEY);
-  code = http.POST(payload);
+  int code = http.POST(payload);
   http.end();
 
   savingDiagnostics(code, WiFi.RSSI());
 
-  return code == 201 || code == 200;
+  if (code != 201 && code != 200) {
+    return false;
+  }
+
+  bufferCount = 0;
+  Serial.printf("UPLOAD OK  %d lecturas  | RSSI %d dBm\n", pending, WiFi.RSSI());
+  return true;
 }
 
 // Returns > 0 when `offered` is newer than `installed`, 0 when they match,
@@ -245,11 +334,42 @@ void setup() {
 
   printBootBanner();
   connectWiFi();
+  syncTime();
 
   if (!sht31.begin(0x44)) {
     Serial.println("SHT3X no encontrado en 0x44");
   } else {
     Serial.println("SHT3X inicializado");
+  }
+}
+
+void uploadWithRetries() {
+  if (bufferCount == 0) {
+    return;
+  }
+
+  bool sent = false;
+  for (int attempt = 0; attempt < 3 && !sent; attempt++) {
+    feedWatchdog();
+    sent = postBatch();
+    if (!sent) {
+      delay((attempt + 1) * 5000UL);
+    }
+  }
+
+  if (sent) {
+    consecutiveFails = 0;
+    return;
+  }
+
+  consecutiveFails++;
+  Serial.printf("UPLOAD fallido: %d lecturas en buffer (fallos consec: %d)\n",
+                bufferCount, consecutiveFails);
+
+  if (consecutiveFails >= MAX_CONSECUTIVE_FAILURES) {
+    Serial.println("Demasiados fallos seguidos -> renovando conexion WiFi");
+    connectWiFi();
+    consecutiveFails = 0;
   }
 }
 
@@ -265,44 +385,29 @@ void loop() {
     checkForOTA();
   }
 
-  if (now - lastMeasurement < MEASURE_INTERVAL_MS) {
-    return;
-  }
-  lastMeasurement = now;
+  if (now - lastMeasurement >= MEASURE_INTERVAL_MS) {
+    lastMeasurement = now;
 
-  if (WiFi.status() != WL_CONNECTED) {
-    consecutiveFails = 0;
-    connectWiFi();
-  }
-
-  float temperature = sht31.readTemperature();
-  float humidity = sht31.readHumidity();
-
-  if (isnan(temperature) || isnan(humidity)) {
-    Serial.println("Lectura del sensor fallida");
-    return;
-  }
-
-  bool sent = false;
-  for (int attempt = 0; attempt < 3 && !sent; attempt++) {
-    feedWatchdog();
-    sent = postReading(temperature, humidity);
-    if (!sent) {
-      delay((attempt + 1) * 5000UL);
-    }
-  }
-
-  if (sent) {
-    consecutiveFails = 0;
-    Serial.printf("OK %.2f C  %.2f %%  | RSSI %d dBm\n",
-                  temperature, humidity, WiFi.RSSI());
-  } else {
-    consecutiveFails++;
-    Serial.printf("POST fallido tras reintentos (fallos consec: %d)\n", consecutiveFails);
-    if (consecutiveFails >= MAX_CONSECUTIVE_FAILURES) {
-      Serial.println("Demasiados fallos seguidos -> renovando conexión WiFi");
+    if (WiFi.status() != WL_CONNECTED) {
       connectWiFi();
-      consecutiveFails = 0;
     }
+
+    float temperature = sht31.readTemperature();
+    float humidity = sht31.readHumidity();
+
+    if (isnan(temperature) || isnan(humidity)) {
+      Serial.println("Lectura del sensor fallida");
+    } else {
+      pushReading(temperature, humidity);
+      Serial.printf("MED %.2f C  %.2f %%  | buffer %d/%d\n",
+                    temperature, humidity, bufferCount, BUFFER_CAPACITY);
+    }
+  }
+
+  bool due = now - lastUpload >= UPLOAD_INTERVAL_MS ||
+             bufferCount >= BUFFER_CAPACITY;
+  if (due && bufferCount > 0 && now - lastUpload >= MIN_UPLOAD_GAP_MS) {
+    lastUpload = now;
+    uploadWithRetries();
   }
 }
