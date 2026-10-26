@@ -96,6 +96,25 @@ Devuelve las lecturas de sensor en un rango de tiempo.
 
 Query params: `range` (`1h` | `3h` | `6h` | `24h` | `7d` | `custom`), `start`, `end`.
 
+### `GET /api/latest`
+
+Snapshot compacto de la última lectura, pensado para widgets móviles.
+
+Query params: `device` (opcional, filtra por dispositivo).
+
+```json
+{
+  "device_id": "trueno-01",
+  "temperature": 24.17,
+  "humidity": 56.07,
+  "created_at": "2026-10-26T14:49:46.070Z",
+  "age_seconds": 120,
+  "online": true
+}
+```
+
+`online` usa la misma ventana de 40 minutos que el dashboard. Caché de 10 minutos: no añadas parámetros anti-caché desde el widget, o cada refresco despertará la base de datos.
+
 ### `GET /api/firmware/latest`
 
 Informa la versión más reciente del firmware para OTA.
